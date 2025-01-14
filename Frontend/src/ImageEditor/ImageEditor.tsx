@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ImageEditor() {
   const imageRef = useRef<HTMLImageElement>(null);
@@ -33,6 +33,19 @@ export default function ImageEditor() {
   const handleSave = () => {
     console.log("Selection saved:", { coords1, coords2 });
   };
+
+  const handleKeyDown = (event: any) => {
+    if (event.key === "Escape") {
+      handleClear();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   return (
     <div
