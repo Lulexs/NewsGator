@@ -1,11 +1,15 @@
 import { MantineProvider } from "@mantine/core";
-import ImageEditor from "./ImageEditor/ImageEditor";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
+import { Notifications } from "@mantine/notifications";
+import { RouterProvider } from "react-router";
+import { router } from "./app/routes/routes";
 
 function App() {
   return (
     <MantineProvider>
-      <ImageEditor />
+      <Notifications />
+      <RouterProvider router={router} />
     </MantineProvider>
   );
 }
