@@ -72,7 +72,9 @@ const Login = () => {
                   Register
                 </Anchor>
               </Text>
-              <Button type="submit">Login</Button>
+              <Button c="white" bg="black" type="submit">
+                Login
+              </Button>
             </Group>
           </form>
         </Paper>

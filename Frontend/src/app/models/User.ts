@@ -1,3 +1,5 @@
+import { ThumbnailedNews } from "./News";
+
 export enum UserRole {
   Editor,
   Reader,
@@ -10,13 +12,13 @@ export interface UserSubscriptions {
 }
 
 export interface User {
+  id: string;
   username: string;
   email: string;
-  password: string;
   avatar: string;
   role: UserRole;
   subscriptions?: UserSubscriptions;
-  bookmarks?: string[];
+  bookmarks?: ThumbnailedNews[];
 }
 
 export interface UserLoginValues {

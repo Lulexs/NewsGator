@@ -1,6 +1,7 @@
 import { notifications } from "@mantine/notifications";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { User, UserLoginValues, UserRegisterValues } from "../models/User";
+import { News } from "../models/News";
 
 axios.defaults.baseURL = "http://localhost:5272/api";
 
@@ -20,20 +21,47 @@ axios.interceptors.response.use(
 
 const requests = {
   get: <T>(url: string) => axios.get<T>(url).then(responseBody),
-  post: <T>(url: string, body: {}) =>
-    axios.post<T>(url, body).then(responseBody),
+  post: <T>(url: string, body: {}, headers: {} = {}) =>
+    axios.post<T>(url, body, { headers }).then(responseBody),
   put: <T>(url: string, body: {}) => axios.put<T>(url, body).then(responseBody),
   del: <T>(url: string) => axios.delete<T>(url).then(responseBody),
 };
 
 const Account = {
-  login: (user: UserLoginValues) => requests.post<User>("/users/login", user),
+  login: (user: UserLoginValues) => requests.post<User>("/Users/login", user),
   register: (user: UserRegisterValues) =>
-    requests.post<void>("/users/register", user),
+    requests.post<void>("/Users/register", user),
+};
+
+const NewsAgent = {
+  getSingleNews: (newsId: string) => requests.get<News>(`/NewsPage/${newsId}`),
+  getNewsFromUrl: (newsUrl: string) =>
+    axios
+      .post<string>("/NewsPage/acquire", newsUrl, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then(responseBody),
+  cropImage: (
+    imageName: string,
+    top: number,
+    left: number,
+    bottom: number,
+    right: number
+  ) =>
+    axios.post("/NewsPage/crop", {
+      imageName,
+      top,
+      left,
+      bottom,
+      right,
+    }),
 };
 
 const agent = {
   Account,
+  NewsAgent,
 };
 
 export default agent;

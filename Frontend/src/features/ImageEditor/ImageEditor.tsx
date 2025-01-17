@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+import agent from "../../app/api/agent";
 
 export default function ImageEditor() {
+  const { image } = useParams();
+  const navigate = useNavigate();
+
   const imageRef = useRef<HTMLImageElement>(null);
   const [coords1, setCoords1] = useState<{ x: number; y: number } | null>(null);
   const [coords2, setCoords2] = useState<{ x: number; y: number } | null>(null);
@@ -30,8 +35,15 @@ export default function ImageEditor() {
     setCoords2(null);
   };
 
-  const handleSave = () => {
-    console.log("Selection saved:", { coords1, coords2 });
+  const handleSave = async () => {
+    await agent.NewsAgent.cropImage(
+      image!.replace(".png", ""),
+      coords1!.y,
+      coords1!.x,
+      coords2!.y,
+      coords2!.x
+    );
+    navigate("/editorpage");
   };
 
   const handleKeyDown = (event: any) => {
@@ -55,7 +67,7 @@ export default function ImageEditor() {
       }}
     >
       <img
-        src="/screeny.png"
+        src={`http://localhost:9898/${image}`}
         alt="Logo"
         ref={imageRef}
         style={{ cursor: "crosshair", display: "block" }}

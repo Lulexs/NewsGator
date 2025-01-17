@@ -1,0 +1,16 @@
+.stateButton {
+  transition: min-width 0.3s ease;
+}
+
+.stateButton:hover {
+  min-width: 200px !important;
+  background-color: gray !important;
+}
+
+.singleNews {
+  transition: 0.3s ease;
+}
+
+.singleNews:hover {
+  background-color: white !important;
+}

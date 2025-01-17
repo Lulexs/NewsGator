@@ -141,7 +141,9 @@ const Register = () => {
                   Login
                 </Anchor>
               </Text>
-              <Button type="submit">Register</Button>
+              <Button c="white" bg="black" type="submit">
+                Register
+              </Button>
             </Group>
           </form>
         </Paper>
