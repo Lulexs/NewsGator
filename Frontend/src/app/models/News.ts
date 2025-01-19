@@ -25,6 +25,7 @@ export interface News {
   id: string;
   title: string;
   createdAt: Date;
+  thumbnail?: string;
   location?: string;
   communityNotes?: CommunityNote;
   newspaperNews?: NewspaperNews[];

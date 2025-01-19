@@ -4,9 +4,9 @@ import styles from "../EditorPage.module.css";
 import { useDisclosure } from "@mantine/hooks";
 import CreateNewsDialog from "../../Dialogs/NewNewsDialog";
 import { useState } from "react";
-import { News } from "../../../app/models/News";
-import { NewsEditorForm } from "./NewsEditorForm";
-import { useNavigate } from "react-router";
+import NewsEditorForm from "./NewsEditorForm";
+import { useStore } from "../../../app/stores/store";
+import { observer } from "mobx-react-lite";
 
 const fakemData = [
   {
@@ -61,14 +61,14 @@ const fakemData = [
   },
 ];
 
-export default function NewsEditor() {
+export default observer(function NewsEditor() {
   const [
     newNewsDialogOpened,
     { toggle: toggleNewNewsDialog, close: closeNewNewsDialog },
   ] = useDisclosure();
   const [fakeData, setFakeData] = useState(fakemData);
-  const [selectedNews, setSelectedNews] = useState<News | null>(null);
-  const navigate = useNavigate();
+  const { newsEditorFormStateStore } = useStore();
+  const selectedNews = newsEditorFormStateStore.editedNews;
 
   return (
     <>
@@ -115,7 +115,7 @@ export default function NewsEditor() {
                     onClick={() => {
                       if (data.newsId == "undefined") {
                         console.log("Here");
-                        setSelectedNews({
+                        newsEditorFormStateStore.setNews({
                           title: data.title,
                           id: data.newsId,
                           createdAt: new Date(Date.now()),
@@ -147,13 +147,7 @@ export default function NewsEditor() {
               Edit news
             </Title>
             <Flex w="100%" h="100%" bg="rgba(210, 210, 210, 1)">
-              <NewsEditorForm
-                news={selectedNews}
-                onUpdate={(imageSrc: string) => {
-                  navigate(`/imageeditor/${imageSrc}.png`);
-                  console.log("News updated:", imageSrc);
-                }}
-              />
+              <NewsEditorForm />
             </Flex>
           </Flex>
         </Flex>
@@ -174,4 +168,4 @@ export default function NewsEditor() {
       />
     </>
   );
-}
+});

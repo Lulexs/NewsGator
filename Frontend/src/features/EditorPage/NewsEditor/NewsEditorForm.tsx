@@ -10,49 +10,19 @@ import {
   Text,
 } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
-import { useState, useEffect } from "react";
-import { News, NewspaperNews } from "../../../app/models/News";
+import { useState } from "react";
 import CreateCommunityNoteDialog from "../../Dialogs/CreateCommunityNoteDialog";
 import NewspaperNewsDialog from "../../Dialogs/NewspaperNewsDialog";
+import { observer } from "mobx-react-lite";
+import { useStore } from "../../../app/stores/store";
 
-interface NewsEditorFormProps {
-  news: News | null;
-  onUpdate: (imageSrc: string) => void;
-}
-export function NewsEditorForm({ news, onUpdate }: NewsEditorFormProps) {
+export default observer(function NewsEditorForm() {
   const [dialogOpened, setDialogOpened] = useState(false);
   const [communityNoteDialogOpened, setCommunityNoteDialogOpened] =
     useState(false);
-  const [editedNews, setEditedNews] = useState<News | null>(news);
 
-  useEffect(() => {
-    setEditedNews(news);
-  }, [news]);
-
-  const handleNewspaperNewsAdd = (newspaperNews: NewspaperNews) => {
-    if (editedNews) {
-      const updatedNews = {
-        ...editedNews,
-        newspaperNews: [...(editedNews.newspaperNews || []), newspaperNews],
-      };
-      setEditedNews(updatedNews);
-      onUpdate(newspaperNews.content);
-    }
-  };
-
-  const handleAddCommunityNote = (text: string) => {
-    if (editedNews) {
-      const updatedNews = {
-        ...editedNews,
-        communityNotes: {
-          text,
-          upvotes: 0,
-          downvotes: 0,
-        },
-      };
-      setEditedNews(updatedNews);
-    }
-  };
+  const { newsEditorFormStateStore } = useStore();
+  const editedNews = newsEditorFormStateStore.editedNews;
 
   if (!editedNews) {
     return <Text>Select a news item to edit</Text>;
@@ -63,19 +33,20 @@ export function NewsEditorForm({ news, onUpdate }: NewsEditorFormProps) {
       <TextInput
         label="Title"
         value={editedNews.title}
-        onChange={(e) =>
-          setEditedNews((prev) =>
-            prev ? { ...prev, title: e.target.value } : null
-          )
-        }
+        onChange={(e) => newsEditorFormStateStore.changeTitle(e.target.value)}
       />
       <TextInput
         label="Location"
         value={editedNews.location || ""}
         onChange={(e) =>
-          setEditedNews((prev) =>
-            prev ? { ...prev, location: e.target.value } : null
-          )
+          newsEditorFormStateStore.changeLocation(e.target.value)
+        }
+      />
+      <TextInput
+        label="Thumbnail"
+        value={editedNews.thumbnail || ""}
+        onChange={(e) =>
+          newsEditorFormStateStore.changeThumbnail(e.target.value)
         }
       />
 
@@ -84,27 +55,13 @@ export function NewsEditorForm({ news, onUpdate }: NewsEditorFormProps) {
           <Group gap="apart" mb="sm">
             <Text fw={500}>Community Notes</Text>
             <CloseButton
-              onClick={() =>
-                setEditedNews((prev) =>
-                  prev ? { ...prev, communityNotes: undefined } : null
-                )
-              }
+              onClick={() => newsEditorFormStateStore.clearCommunityNote()}
             />
           </Group>
           <Textarea
             value={editedNews.communityNotes.text}
             onChange={(e) =>
-              setEditedNews((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      communityNotes: {
-                        ...prev.communityNotes!,
-                        text: e.target.value,
-                      },
-                    }
-                  : null
-              )
+              newsEditorFormStateStore.changeCommunityNote(e.target.value)
             }
           />
           <Group mt="sm">
@@ -136,16 +93,7 @@ export function NewsEditorForm({ news, onUpdate }: NewsEditorFormProps) {
                 <Text fw={500}>{news.newspaper}</Text>
                 <CloseButton
                   onClick={() =>
-                    setEditedNews((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            newspaperNews: prev.newspaperNews?.filter(
-                              (_, i) => i !== index
-                            ),
-                          }
-                        : null
-                    )
+                    newsEditorFormStateStore.removeNewsSource(index)
                   }
                 />
               </Group>
@@ -161,17 +109,27 @@ export function NewsEditorForm({ news, onUpdate }: NewsEditorFormProps) {
             </Paper>
           ))}
         </Stack>
+        <Group style={{ alignSelf: "center", justifySelf: "flex-end" }}>
+          <Button
+            onClick={() => {
+              const { id, createdAt, ...news } = editedNews;
+              console.log(news);
+            }}
+          >
+            Save news
+          </Button>
+        </Group>
       </Stack>
       <NewspaperNewsDialog
         opened={dialogOpened}
         onClose={() => setDialogOpened(false)}
-        onAdd={handleNewspaperNewsAdd}
+        onAdd={newsEditorFormStateStore.handleNewspaperNewsAdd}
       />
       <CreateCommunityNoteDialog
         opened={communityNoteDialogOpened}
         onClose={() => setCommunityNoteDialogOpened(false)}
-        onAdd={handleAddCommunityNote}
+        onAdd={newsEditorFormStateStore.handleAddCommunityNote}
       />
     </Stack>
   );
-}
+});
