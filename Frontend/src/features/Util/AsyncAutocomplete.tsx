@@ -1,83 +1,90 @@
 import { useRef, useState } from "react";
-import { Combobox, Loader, TextInput, useCombobox } from "@mantine/core";
+import {
+  Combobox,
+  Loader,
+  TextInput,
+  useCombobox,
+  Box,
+  Group,
+  Text,
+} from "@mantine/core";
+import agent from "../../app/api/agent";
+import { useStore } from "../../app/stores/store";
 
-const MOCKDATA = [
-  "🍎 Apples",
-  "🍌 Bananas",
-  "🥦 Broccoli",
-  "🥕 Carrots",
-  "🍫 Chocolate",
-  "🍇 Grapes",
-  "🍋 Lemon",
-  "🥬 Lettuce",
-  "🍄 Mushrooms",
-  "🍊 Oranges",
-  "🥔 Potatoes",
-  "🍅 Tomatoes",
-  "🥚 Eggs",
-  "🥛 Milk",
-  "🍞 Bread",
-  "🍗 Chicken",
-  "🍔 Hamburger",
-  "🧀 Cheese",
-  "🥩 Steak",
-  "🍟 French Fries",
-  "🍕 Pizza",
-  "🥦 Cauliflower",
-  "🥜 Peanuts",
-  "🍦 Ice Cream",
-  "🍯 Honey",
-  "🥖 Baguette",
-  "🍣 Sushi",
-  "🥝 Kiwi",
-  "🍓 Strawberries",
-];
-
-function getAsyncData(searchQuery: string, signal: AbortSignal) {
-  return new Promise<string[]>((resolve, reject) => {
-    signal.addEventListener("abort", () => {
-      reject(new Error("Request aborted"));
-    });
-
-    setTimeout(() => {
-      resolve(
-        MOCKDATA.filter((item) =>
-          item.toLowerCase().includes(searchQuery.toLowerCase())
-        ).slice(0, 5)
-      );
-    }, Math.random() * 1000);
-  });
+interface EditorPageSimplifiedNews {
+  id: string;
+  title: string;
+  createdAt: Date;
+  thumbnail?: string;
 }
 
 export function AsyncAutocomplete() {
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
-
+  const { newsEditorFormStateStore } = useStore();
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<string[] | null>(null);
+  const [data, setData] = useState<EditorPageSimplifiedNews[] | null>(null);
   const [value, setValue] = useState("");
   const [empty, setEmpty] = useState(false);
   const abortController = useRef<AbortController>();
 
   const fetchOptions = (query: string) => {
+    if (!query.trim()) {
+      setData([]);
+      setEmpty(true);
+      setLoading(false);
+      return;
+    }
+
     abortController.current?.abort();
     abortController.current = new AbortController();
     setLoading(true);
 
-    getAsyncData(query, abortController.current.signal)
+    agent.NewsAgent.getFilteredDataForEditor(query)
       .then((result) => {
         setData(result);
         setLoading(false);
         setEmpty(result.length === 0);
         abortController.current = undefined;
       })
-      .catch(() => {});
+      .catch(() => {
+        setLoading(false);
+        setEmpty(true);
+        setData([]);
+      });
   };
 
   const options = (data || []).map((item) => (
-    <Combobox.Option value={item} key={item}>
-      {item}
+    <Combobox.Option
+      value={item.title}
+      key={item.id}
+      onClick={async () => {
+        const res = await agent.NewsAgent.getSingleNews(item.id);
+        newsEditorFormStateStore.setNews(res);
+      }}
+    >
+      <Group gap="sm">
+        <Box>
+          <img
+            src={item.thumbnail ?? "Image_unavailable.png"}
+            alt={item.title}
+            style={{
+              width: "48px",
+              height: "48px",
+              objectFit: "cover",
+              borderRadius: "4px",
+            }}
+          />
+        </Box>
+
+        <Box>
+          <Text fw={500}>{item.title}</Text>
+          <Text size="sm" c="dimmed">
+            {new Date(item.createdAt).toLocaleDateString()}
+          </Text>
+        </Box>
+      </Group>
     </Combobox.Option>
   ));
 
@@ -93,26 +100,32 @@ export function AsyncAutocomplete() {
       <Combobox.Target>
         <TextInput
           label="Query news"
-          placeholder="Search groceries"
+          placeholder="Search for news titles"
           value={value}
           onChange={(event) => {
-            setValue(event.currentTarget.value);
-            fetchOptions(event.currentTarget.value);
+            const newValue = event.currentTarget.value;
+            setValue(newValue);
+            fetchOptions(newValue);
             combobox.resetSelectedOption();
-            combobox.openDropdown();
+            if (newValue.trim()) {
+              combobox.openDropdown();
+            } else {
+              combobox.closeDropdown();
+            }
           }}
-          onClick={() => combobox.openDropdown()}
+          onClick={() => value.trim() && combobox.openDropdown()}
           onFocus={() => {
-            combobox.openDropdown();
-            if (data === null) {
-              fetchOptions(value);
+            if (value.trim()) {
+              combobox.openDropdown();
+              if (data === null) {
+                fetchOptions(value);
+              }
             }
           }}
           onBlur={() => combobox.closeDropdown()}
           rightSection={loading && <Loader size={18} />}
         />
       </Combobox.Target>
-
       <Combobox.Dropdown hidden={data === null}>
         <Combobox.Options>
           {options}
@@ -122,3 +135,5 @@ export function AsyncAutocomplete() {
     </Combobox>
   );
 }
+
+export default AsyncAutocomplete;

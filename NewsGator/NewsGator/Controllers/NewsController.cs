@@ -96,4 +96,19 @@ public class NewsController : ControllerBase
             return BadRequest("Failed to update news, please try again");
         }
     }
+
+    [HttpGet("filter")]
+    public async Task<IActionResult> GetFilteredNews(string filter)
+    {
+        try
+        {
+            var res = await _newsLogic.GetFilteredNewsForEditor(filter);
+            return Ok(res);
+        }
+        catch (Exception ec)
+        {
+            _logger.LogError("Error occured while fetching filtered news for editor with filter {}, {}", filter, ec.Message);
+            return BadRequest("Failed to filter news, please try again");
+        }
+    }
 }

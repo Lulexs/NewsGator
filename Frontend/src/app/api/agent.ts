@@ -63,6 +63,9 @@ const NewsAgent = {
     ),
   updateNews: (newsId: string, news: any) =>
     requests.put(`/News/${newsId}`, news),
+
+  getFilteredDataForEditor: (title: string) =>
+    requests.get<EditorPageSimplifiedNews[]>(`/News/filter/?filter=${title}`),
 };
 
 const agent = {

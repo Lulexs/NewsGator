@@ -1,4 +1,5 @@
 using NewsGator.ApplicationLogic;
+using NewsGator.Persistence;
 using NewsGator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 builder.Logging.AddEventSourceLogger();
+
+builder.Configuration.AddUserSecrets<Program>();
 
 builder.Services.AddControllers();
 
@@ -45,6 +48,8 @@ builder.Services.AddCors(opt =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+MongoSessionManager.Initialize(builder.Configuration);
 
 var app = builder.Build();
 

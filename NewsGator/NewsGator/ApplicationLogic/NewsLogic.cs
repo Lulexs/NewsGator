@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using NewsGator.Dtos;
 using NewsGator.Models;
@@ -75,5 +76,27 @@ public class NewsLogic
             .Set(x => x.NewspaperNews, dto.NewspaperNews);
 
         await collection.FindOneAndUpdateAsync(filter, update);
+    }
+
+    // public async Task GetFullFilteredNews(NewsFilterDto dto) {
+
+    // }
+
+    public async Task<List<NewsForEditor>> GetFilteredNewsForEditor(string title)
+    {
+        var collection = MongoSessionManager.GetCollection<News>("news");
+
+        var filter = Builders<News>.Filter.Regex("Title", new BsonRegularExpression(title, "i"));
+        var projection = Builders<News>.Projection.Expression(news => new NewsForEditor
+        {
+            Id = news.Id.ToString(),
+            Title = news.Title,
+            CreatedAt = news.CreatedAt,
+            Thumbnail = news.Thumbnail
+        });
+
+        var results = await collection.Find(filter).Project(projection).ToListAsync();
+
+        return results;
     }
 }
