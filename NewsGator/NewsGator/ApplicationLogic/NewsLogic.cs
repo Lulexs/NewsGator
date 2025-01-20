@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
 using NewsGator.Dtos;
 using NewsGator.Models;
 using NewsGator.Persistence;
@@ -13,19 +14,44 @@ public class NewsLogic
         await collection.InsertOneAsync(new News()
         {
             Title = dto.Title,
-            CreatedAd = DateTime.Now,
+            CreatedAt = DateTime.Now,
             Location = dto.Location,
-            CommunityNote = dto.CommunityNote,
+            Thumbnail = dto.Thumbnail,
+            CommunityNote = dto.CommunityNotes,
             NewspaperNews = dto.NewspaperNews
         });
     }
 
-    public async Task<List<News>> GetNewsForEditor(int count)
+    public async Task<List<NewsForEditor>> GetNewsForEditor(int count)
     {
         var collection = MongoSessionManager.GetCollection<News>("news");
 
-        var res = await collection.Find(news => true).Skip(count).Limit(15).ToListAsync();
+        var projection = Builders<News>.Projection.Expression(news => new NewsForEditor
+        {
+            Id = news.Id.ToString(),
+            Title = news.Title,
+            CreatedAt = news.CreatedAt,
+            Thumbnail = news.Thumbnail
+        });
+        var sort = Builders<News>.Sort.Descending(p => p.CreatedAt);
+
+        var res = await collection.Find(news => true)
+                                   .Project(projection)
+                                   .Sort(sort)
+                                   .Skip(count)
+                                   .Limit(8)
+                                   .ToListAsync();
+
         return res ?? [];
+    }
+
+    public async Task<News?> GetSingleNews(ObjectId id)
+    {
+        var collection = MongoSessionManager.GetCollection<News>("news");
+
+        var res = await collection.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+        return res;
     }
 
     public async Task<long> GetNewsCount()
@@ -34,5 +60,20 @@ public class NewsLogic
 
         var res = await collection.CountDocumentsAsync(news => true);
         return res;
+    }
+
+    public async Task UpdateSingleNews(ObjectId id, NewsDto dto)
+    {
+        var collection = MongoSessionManager.GetCollection<News>("news");
+
+        var filter = Builders<News>.Filter.Eq(x => x.Id, id);
+        var update = Builders<News>.Update
+            .Set(x => x.Title, dto.Title)
+            .Set(x => x.Location, dto.Location)
+            .Set(x => x.Thumbnail, dto.Thumbnail)
+            .Set(x => x.CommunityNote, dto.CommunityNotes)
+            .Set(x => x.NewspaperNews, dto.NewspaperNews);
+
+        await collection.FindOneAndUpdateAsync(filter, update);
     }
 }

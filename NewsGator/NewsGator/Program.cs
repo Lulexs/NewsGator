@@ -1,3 +1,4 @@
+using NewsGator.ApplicationLogic;
 using NewsGator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,22 +13,28 @@ builder.Logging.AddEventSourceLogger();
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<IPlaywright>(await Playwright.CreateAsync());
-builder.Services.AddSingleton<IBrowser>(serviceProvider => {
+builder.Services.AddSingleton<IBrowser>(serviceProvider =>
+{
     var playwright = serviceProvider.GetRequiredService<IPlaywright>();
 
-    return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions {
+    return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
         Headless = true
     }).GetAwaiter().GetResult();
 });
-builder.Services.AddScoped<IPage>(serviceProvider => {
+builder.Services.AddScoped<IPage>(serviceProvider =>
+{
     var browser = serviceProvider.GetRequiredService<IBrowser>();
 
     return browser.NewPageAsync().GetAwaiter().GetResult();
 });
 builder.Services.AddScoped<AcquirePageService>();
+builder.Services.AddScoped<NewsLogic>();
 
-builder.Services.AddCors(opt => {
-    opt.AddPolicy("CORS", policy => {
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("CORS", policy =>
+    {
         policy.AllowCredentials()
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -42,7 +49,8 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) {
+if (app.Environment.IsDevelopment())
+{
     app.UseSwagger();
     app.UseSwaggerUI();
 }

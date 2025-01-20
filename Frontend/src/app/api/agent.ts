@@ -1,7 +1,7 @@
 import { notifications } from "@mantine/notifications";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { User, UserLoginValues, UserRegisterValues } from "../models/User";
-import { News } from "../models/News";
+import { EditorPageSimplifiedNews, News } from "../models/News";
 
 axios.defaults.baseURL = "http://localhost:5272/api";
 
@@ -34,15 +34,13 @@ const Account = {
 };
 
 const NewsAgent = {
-  getSingleNews: (newsId: string) => requests.get<News>(`/NewsPage/${newsId}`),
+  getSingleNews: (newsId: string) => requests.get<News>(`/News/${newsId}`),
   getNewsFromUrl: (newsUrl: string) =>
-    axios
-      .post<string>("/NewsPage/acquire", newsUrl, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then(responseBody),
+    requests.post<string>("/NewsPage/acquire", newsUrl, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
   cropImage: (
     imageName: string,
     top: number,
@@ -50,13 +48,21 @@ const NewsAgent = {
     bottom: number,
     right: number
   ) =>
-    axios.post("/NewsPage/crop", {
+    requests.post("/NewsPage/crop", {
       imageName,
       top,
       left,
       bottom,
       right,
     }),
+
+  newNews: (news: any) => requests.post("/News", news),
+  getEditorNews: ({ pageParam }: any) =>
+    requests.get<{ data: EditorPageSimplifiedNews[]; nextCursor: number }>(
+      `/News?cursor=${pageParam}`
+    ),
+  updateNews: (newsId: string, news: any) =>
+    requests.put(`/News/${newsId}`, news),
 };
 
 const agent = {

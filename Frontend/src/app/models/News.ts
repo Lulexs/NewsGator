@@ -30,3 +30,10 @@ export interface News {
   communityNotes?: CommunityNote;
   newspaperNews?: NewspaperNews[];
 }
+
+export interface EditorPageSimplifiedNews {
+  id: string;
+  title: string;
+  createdAt: Date;
+  thumbnail?: string;
+}

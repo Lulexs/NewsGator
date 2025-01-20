@@ -15,6 +15,8 @@ import CreateCommunityNoteDialog from "../../Dialogs/CreateCommunityNoteDialog";
 import NewspaperNewsDialog from "../../Dialogs/NewspaperNewsDialog";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../../app/stores/store";
+import agent from "../../../app/api/agent";
+import { notifications } from "@mantine/notifications";
 
 export default observer(function NewsEditorForm() {
   const [dialogOpened, setDialogOpened] = useState(false);
@@ -111,9 +113,28 @@ export default observer(function NewsEditorForm() {
         </Stack>
         <Group style={{ alignSelf: "center", justifySelf: "flex-end" }}>
           <Button
-            onClick={() => {
+            onClick={async () => {
               const { id, createdAt, ...news } = editedNews;
-              console.log(news);
+              console.log(id, news);
+              try {
+                if (id === "undefined") {
+                  await agent.NewsAgent.newNews(news);
+                  notifications.show({
+                    title: "Success",
+                    message: "News successfully saved",
+                    color: "green",
+                  });
+                } else {
+                  await agent.NewsAgent.updateNews(id, news);
+                  notifications.show({
+                    title: "Success",
+                    message: "News successfully updated",
+                    color: "green",
+                  });
+                }
+              } catch (error) {
+                console.error(error);
+              }
             }}
           >
             Save news
