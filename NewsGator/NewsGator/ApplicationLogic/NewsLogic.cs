@@ -46,6 +46,82 @@ public class NewsLogic
         return res ?? [];
     }
 
+
+    public async Task<List<NewsForEditor>> GetMostRecentNews(int count)
+    {
+        var collection = MongoSessionManager.GetCollection<News>("news");
+
+        var projection = Builders<News>.Projection.Expression(news => new NewsForEditor
+        {
+            Id = news.Id.ToString(),
+            Title = news.Title,
+            Thumbnail = news.Thumbnail,
+            CreatedAt = news.CreatedAt
+        });
+
+        var sort = Builders<News>.Sort.Descending(p => p.CreatedAt);
+
+        var res = await collection.Find(news => true)
+                                  .Project(projection)
+                                  .Sort(sort)
+                                  .Skip(count)
+                                  .Limit(8)
+                                  .ToListAsync();
+
+        return res;
+    }
+
+    public async Task<List<NewsForEditor>> GetMostPopularNews()
+    {
+        var collectionClicks = MongoSessionManager.GetCollection<Click>("clicks");
+
+        var sort = Builders<Click>.Sort.Descending(p => p.Clicks);
+        var projection = Builders<Click>.Projection.Expression(x => x.NewsId);
+        var mostPopular = await collectionClicks.Find(click => true)
+                                          .Project(projection)
+                                          .Sort(sort)
+                                          .Limit(8)
+                                          .ToListAsync();
+
+        var collectionNews = MongoSessionManager.GetCollection<News>("news");
+        var projectionNews = Builders<News>.Projection.Expression(x => new NewsForEditor()
+        {
+            Id = x.Id.ToString(),
+            Thumbnail = x.Thumbnail,
+            CreatedAt = x.CreatedAt,
+            Title = x.Title
+        });
+        var mostPopularNews = await collectionNews.Find(news => mostPopular.Contains(news.Id))
+                                            .Project(projectionNews)
+                                            .ToListAsync();
+
+        return mostPopularNews;
+    }
+
+    public async Task<NewsWithStringId?> GetSingleNewsForReader(ObjectId id)
+    {
+        var collectionClicks = MongoSessionManager.GetCollection<Click>("clicks");
+
+        var filter = Builders<Click>.Filter.Eq(x => x.NewsId, id);
+        var update = Builders<Click>.Update.Inc(x => x.Clicks, 1);
+        await collectionClicks.FindOneAndUpdateAsync(filter, update);
+
+        var collectionNews = MongoSessionManager.GetCollection<News>("news");
+        var projection = Builders<News>.Projection.Expression(x => new NewsWithStringId()
+        {
+            Id = x.Id.ToString(),
+            Location = x.Location,
+            Thumbnail = x.Thumbnail,
+            Title = x.Title,
+            CreatedAt = x.CreatedAt,
+            NewspaperNews = x.NewspaperNews,
+            CommunityNote = x.CommunityNote
+        });
+        var singleNews = await collectionNews.Find(x => x.Id == id).Project(projection).FirstOrDefaultAsync();
+
+        return singleNews;
+    }
+
     public async Task<News?> GetSingleNews(ObjectId id)
     {
         var collection = MongoSessionManager.GetCollection<News>("news");
@@ -77,10 +153,6 @@ public class NewsLogic
 
         await collection.FindOneAndUpdateAsync(filter, update);
     }
-
-    // public async Task GetFullFilteredNews(NewsFilterDto dto) {
-
-    // }
 
     public async Task<List<NewsForEditor>> GetFilteredNewsForEditor(string title)
     {

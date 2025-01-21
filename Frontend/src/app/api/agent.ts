@@ -68,9 +68,21 @@ const NewsAgent = {
     requests.get<EditorPageSimplifiedNews[]>(`/News/filter/?filter=${title}`),
 };
 
+const HomePageNewsAgent = {
+  getMostPopular: () =>
+    requests.get<EditorPageSimplifiedNews[]>("/News/mostpopular"),
+  getMostRecent: ({ pageParam }: any) =>
+    requests.get<{ data: EditorPageSimplifiedNews[]; nextCursor: number }>(
+      `/News/mostrecent?cursor=${pageParam}`
+    ),
+  getSingleNews: (newsId: string) =>
+    requests.get<News>(`/News/forreader/${newsId}`),
+};
+
 const agent = {
   Account,
   NewsAgent,
+  HomePageNewsAgent,
 };
 
 export default agent;

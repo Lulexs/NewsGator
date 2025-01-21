@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using NewsGator.ApplicationLogic;
 using NewsGator.Dtos;
 using NewsGator.Models;
@@ -109,6 +108,58 @@ public class NewsController : ControllerBase
         {
             _logger.LogError("Error occured while fetching filtered news for editor with filter {}, {}", filter, ec.Message);
             return BadRequest("Failed to filter news, please try again");
+        }
+    }
+
+    [HttpGet("mostrecent")]
+    public async Task<IActionResult> GetMostRecentNews([FromQuery] int cursor)
+    {
+        try
+        {
+            var totalNews = await _newsLogic.GetNewsCount();
+            var news = await _newsLogic.GetMostRecentNews(cursor);
+
+            if (cursor + 8 < totalNews)
+                return Ok(new { data = news, nextCursor = cursor + 8 });
+
+            return Ok(new { data = news });
+        }
+        catch (Exception ec)
+        {
+            _logger.LogError("Error occured while fetching home page news {}", ec.Message);
+            return BadRequest("Failed to acquire news, please reload page");
+        }
+    }
+
+    [HttpGet("mostpopular")]
+    public async Task<IActionResult> GetMostPopularNews()
+    {
+        try
+        {
+            var mostPopular = await _newsLogic.GetMostPopularNews();
+
+            return Ok(mostPopular);
+        }
+        catch (Exception ec)
+        {
+            _logger.LogError("Error occured while fetching home page news {}", ec.Message);
+            return BadRequest("Failed to acquire news, please reload page");
+        }
+    }
+
+    [HttpGet("forreader/{id}")]
+    public async Task<IActionResult> GetSingleNewsForReader(string id)
+    {
+        try
+        {
+            var singleNews = await _newsLogic.GetSingleNewsForReader(ObjectId.Parse(id));
+
+            return Ok(singleNews);
+        }
+        catch (Exception ec)
+        {
+            _logger.LogError("Error occured while fetching news with id {}, {}", id, ec.Message);
+            return BadRequest("Failed to acquire news, please try again");
         }
     }
 }
