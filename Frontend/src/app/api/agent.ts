@@ -8,6 +8,7 @@ import {
 } from "../models/User";
 import { EditorPageSimplifiedNews, News } from "../models/News";
 import { Review } from "../models/Review";
+import { HomePagePoll, Poll } from "../models/Poll";
 
 axios.defaults.baseURL = "http://localhost:5272/api";
 
@@ -110,11 +111,20 @@ const NewsPageAgent = {
     }),
 };
 
+const PollsAgent = {
+  createPoll: (poll: Poll) => requests.post<Poll>("/Polls", poll),
+  getPollsForEditor: () => requests.get<Poll[]>("/Polls"),
+  getPollForHome: (userId: string) =>
+    requests.get<HomePagePoll>(`/Polls/latest/${userId}`),
+  deletePoll: (pollId: string) => requests.del<void>(`/Polls/${pollId}`),
+};
+
 const agent = {
   Account,
   NewsAgent,
   HomePageNewsAgent,
   NewsPageAgent,
+  PollsAgent,
 };
 
 export default agent;

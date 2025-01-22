@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import PersonalPage from "./PersonalPage";
 import { useStore } from "../../app/stores/store";
 import NewsEditor from "./NewsEditor/NewsEditor";
+import PollsEditor from "./PollsEditor";
 
 enum State {
   Personal,
@@ -136,6 +137,7 @@ export default observer(function EditorPage() {
         </Stack>
         {mode == State.Personal && <PersonalPage />}
         {mode == State.News && <NewsEditor />}
+        {mode == State.Polls && <PollsEditor />}
       </Flex>
     </Flex>
   );

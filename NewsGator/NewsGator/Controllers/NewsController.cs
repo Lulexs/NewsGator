@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using NewsGator.ApplicationLogic;
 using NewsGator.Dtos;
