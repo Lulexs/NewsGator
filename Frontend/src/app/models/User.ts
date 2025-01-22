@@ -7,7 +7,7 @@ export enum UserRole {
 
 export interface UserSubscriptions {
   categories?: string[];
-  authros?: string[];
+  authors?: string[];
   news?: string[];
 }
 
@@ -31,4 +31,12 @@ export interface UserRegisterValues {
   email: string;
   password: string;
   avatar: string;
+}
+
+export interface UpdateUserValues {
+  id: string;
+  avatar?: string;
+  email?: string;
+  subscriptions?: UserSubscriptions;
+  bookmarks?: string[];
 }

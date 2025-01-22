@@ -1,7 +1,13 @@
 import { notifications } from "@mantine/notifications";
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { User, UserLoginValues, UserRegisterValues } from "../models/User";
+import {
+  UpdateUserValues,
+  User,
+  UserLoginValues,
+  UserRegisterValues,
+} from "../models/User";
 import { EditorPageSimplifiedNews, News } from "../models/News";
+import { Review } from "../models/Review";
 
 axios.defaults.baseURL = "http://localhost:5272/api";
 
@@ -31,6 +37,8 @@ const Account = {
   login: (user: UserLoginValues) => requests.post<User>("/Users/login", user),
   register: (user: UserRegisterValues) =>
     requests.post<void>("/Users/register", user),
+  updateUser: (user: UpdateUserValues) =>
+    requests.put<void>("/Users/update", user),
 };
 
 const NewsAgent = {
@@ -75,14 +83,38 @@ const HomePageNewsAgent = {
     requests.get<{ data: EditorPageSimplifiedNews[]; nextCursor: number }>(
       `/News/mostrecent?cursor=${pageParam}`
     ),
-  getSingleNews: (newsId: string) =>
-    requests.get<News>(`/News/forreader/${newsId}`),
+  getSingleNews: (userId: string, newsId: string) =>
+    requests.get<News>(`/News/forreader/${userId}/${newsId}`),
+  getFiltered: ({ pageParam, filterData }: any) =>
+    requests.post<{ data: EditorPageSimplifiedNews[]; nextCursor: number }>(
+      `/News/filter?cursor=${pageParam}`,
+      filterData
+    ),
+};
+
+const NewsPageAgent = {
+  getReviews: (newsId: string) =>
+    requests.get<Review[]>(`/News/reviews/${newsId}`),
+  leaveReview: (review: Review) =>
+    requests.post<void>(`/News/reviews`, {
+      Value: review.value,
+      Comment: review.comment,
+      Commenter: review.commenter,
+      Avatar: review.avatar,
+    }),
+  upvoteDownvote: (newsId: string, userId: string, action: number) =>
+    requests.put(`/News/upvotedownvote`, {
+      NewsId: newsId,
+      UserId: userId,
+      Action: action,
+    }),
 };
 
 const agent = {
   Account,
   NewsAgent,
   HomePageNewsAgent,
+  NewsPageAgent,
 };
 
 export default agent;

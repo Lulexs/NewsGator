@@ -1,4 +1,6 @@
-﻿using MongoDB.Bson;
+﻿using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging.Abstractions;
+using MongoDB.Bson;
 using NewsGator.ApplicationLogic;
 using NewsGator.Dtos;
 using NewsGator.Models;
@@ -54,7 +56,7 @@ public class NewsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<News?>> GetSingleNews(string id)
+    public async Task<IActionResult> GetSingleNews(string id)
     {
         try
         {
@@ -66,7 +68,7 @@ public class NewsController : ControllerBase
             return Ok(new
             {
                 Id = res.Id.ToString(),
-                res.CommunityNote,
+                CommunityNote = res.CommunityNote == null ? null : new { res.CommunityNote.Text, res.CommunityNote.Upvotes, res.CommunityNote.Downvotes },
                 res.CreatedAt,
                 res.Location,
                 res.NewspaperNews,
@@ -147,19 +149,105 @@ public class NewsController : ControllerBase
         }
     }
 
-    [HttpGet("forreader/{id}")]
-    public async Task<IActionResult> GetSingleNewsForReader(string id)
+
+    [HttpGet("forreader/{userId}/{id}")]
+    public async Task<IActionResult> GetSingleNewsForReader(string userId, string id)
     {
         try
         {
-            var singleNews = await _newsLogic.GetSingleNewsForReader(ObjectId.Parse(id));
-
+            var singleNews = await _newsLogic.GetSingleNewsForReader(ObjectId.Parse(userId), ObjectId.Parse(id));
             return Ok(singleNews);
         }
         catch (Exception ec)
         {
-            _logger.LogError("Error occured while fetching news with id {}, {}", id, ec.Message);
-            return BadRequest("Failed to acquire news, please try again");
+            _logger.LogError("Error occurred while fetching news with id {} for user {}, {}", id, userId, ec.Message);
+            return BadRequest("Failed to acquire news, please try again.");
         }
+    }
+
+    // TODO
+    [HttpPost("filter")]
+    public async Task<ActionResult<List<NewsForEditor>>> GetFilteredNews([FromBody] NewsFilterDto dto, int cursor)
+    {
+        Console.WriteLine(dto.Title);
+        Console.WriteLine(dto.Location);
+        Console.WriteLine(dto.Author);
+        if (dto.Categories is not null)
+        {
+            foreach (var a in dto.Categories)
+            {
+                Console.Write(a + " ");
+            }
+            Console.WriteLine();
+        }
+        if (dto.Tags is not null)
+        {
+            foreach (var a in dto.Tags)
+            {
+                Console.Write(a + " ");
+            }
+            Console.WriteLine();
+        }
+        if (dto.Coverages is not null)
+        {
+            foreach (var a in dto.Coverages)
+            {
+                Console.Write(a + " ");
+            }
+            Console.WriteLine();
+        }
+
+        var totalNews = await _newsLogic.GetNewsCount();
+        var news = await _newsLogic.GetMostRecentNews(cursor);
+
+        if (cursor + 8 < totalNews)
+            return Ok(new { data = news, nextCursor = cursor + 8 });
+
+        return Ok(new { data = news });
+    }
+
+    private static ConcurrentBag<Review> templist = new ConcurrentBag<Review>(
+        new[] {
+        new Review { Comment = "Jako lose iznose u informeru", Value = 8, Commenter = "Lulexs", Avatar = "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-1.png" },
+        new Review { Comment = "Dobra vest", Value = 9, Commenter = "Velja", Avatar = "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-5.png" }
+        }
+    );
+
+    // TODO
+    [HttpGet("reviews/{newsId}")]
+    public IActionResult GetNewsReviews(string newsId)
+    {
+        return Ok(templist);
+    }
+
+    // TODO
+    [HttpPost("reviews")]
+    public IActionResult LeaveReview([FromBody] LeaveReviewDto dto)
+    {
+        Console.WriteLine(dto.Comment);
+        Console.WriteLine(dto.Commenter);
+        Console.WriteLine(dto.Avatar);
+        Console.WriteLine(dto.Value);
+        var rivju = new Review
+        {
+            Comment = dto.Comment,
+            Value = dto.Value,
+            Commenter = dto.Commenter,
+            Avatar = dto.Avatar
+        };
+        templist.Add(rivju);
+        return Ok(rivju);
+    }
+
+    // TODO
+    [HttpPut("upvotedownvote")]
+    public IActionResult UpvoteDownvoteCommNote([FromBody] UpvoteDownvoteDto dto)
+    {
+        Console.WriteLine(dto.UserId);
+        Console.WriteLine(dto.NewsId);
+        Console.WriteLine(dto.Action);
+        // action = "upvote"
+        // action = "downvote"
+        return Ok();
     }
 }

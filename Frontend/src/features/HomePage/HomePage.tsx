@@ -22,6 +22,7 @@ export default function HomePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [coverages, setCoverages] = useState<string[]>([]);
   const [author, setAuthor] = useState("");
+  const [isFiltering, setIsFiltering] = useState(false);
 
   const { data: mostPopularNews, isLoading: loadingPopularNews } = useQuery({
     queryKey: ["mostPopularNews"],
@@ -30,19 +31,60 @@ export default function HomePage() {
 
   const {
     data: recentNewsData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    fetchNextPage: fetchNextRecentPage,
+    hasNextPage: hasNextRecentPage,
+    isFetchingNextPage: isFetchingNextRecentPage,
     isLoading: loadingRecentNews,
   } = useInfiniteQuery({
     queryKey: ["mostRecentNews"],
     queryFn: agent.HomePageNewsAgent.getMostRecent,
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: !isFiltering,
+  });
+
+  const {
+    data: filteredNewsData,
+    fetchNextPage: fetchNextFilteredPage,
+    hasNextPage: hasNextFilteredPage,
+    isFetchingNextPage: isFetchingNextFilteredPage,
+    isLoading: loadingFilteredNews,
+    refetch: refetchFilteredNews,
+  } = useInfiniteQuery({
+    queryKey: [
+      "filteredNews",
+      { title, location, categories, tags, coverages, author },
+    ],
+    queryFn: ({ pageParam = 0 }) =>
+      agent.HomePageNewsAgent.getFiltered({
+        pageParam,
+        filterData: {
+          title,
+          location,
+          categories,
+          tags,
+          coverages,
+          author,
+        },
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: isFiltering,
   });
 
   const handleFilterSubmit = () => {
-    console.log({ title, location, categories, tags, coverages, author });
+    setIsFiltering(true);
+    refetchFilteredNews();
+  };
+
+  const handleClearFilters = () => {
+    setTitle("");
+    setLocation("");
+    setCategories([]);
+    setTags([]);
+    setCoverages([]);
+    setAuthor("");
+    setIsFiltering(false);
   };
 
   return (
@@ -99,6 +141,13 @@ export default function HomePage() {
           </Group>
           <Group justify="flex-end" mt="md">
             <Button
+              variant="subtle"
+              onClick={handleClearFilters}
+              disabled={!isFiltering}
+            >
+              Clear Filters
+            </Button>
+            <Button
               c="white"
               bg="black"
               variant="filled"
@@ -109,54 +158,92 @@ export default function HomePage() {
           </Group>
         </Box>
 
-        <Box mb="xl">
-          <Title order={3} mb="md">
-            Most Popular News
-          </Title>
-          {loadingPopularNews ? (
-            <Group justify="center" p="xl">
-              <Loader size="lg" />
-            </Group>
-          ) : (
-            <Group gap="lg">
-              {mostPopularNews?.map((news) => (
-                <NewsCard key={news.id} news={news} />
-              ))}
-            </Group>
-          )}
-        </Box>
-
-        <Box mb="xl">
-          <Title order={3} mb="md">
-            Most Recent News
-          </Title>
-          {loadingRecentNews ? (
-            <Group justify="center" p="xl">
-              <Loader size="lg" />
-            </Group>
-          ) : (
-            <>
-              <Group gap="lg" align="stretch">
-                {recentNewsData?.pages.map((page) =>
-                  page.data.map((news) => (
+        {!isFiltering && (
+          <>
+            <Box mb="xl">
+              <Title order={3} mb="md">
+                Most Popular News
+              </Title>
+              {loadingPopularNews ? (
+                <Group justify="center" p="xl">
+                  <Loader size="lg" />
+                </Group>
+              ) : (
+                <Group gap="lg">
+                  {mostPopularNews?.map((news) => (
                     <NewsCard key={news.id} news={news} />
-                  ))
-                )}
-              </Group>
-              {hasNextPage && (
-                <Group justify="center" mt="xl">
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchNextPage()}
-                    loading={isFetchingNextPage}
-                  >
-                    Load More
-                  </Button>
+                  ))}
                 </Group>
               )}
-            </>
-          )}
-        </Box>
+            </Box>
+
+            <Box mb="xl">
+              <Title order={3} mb="md">
+                Most Recent News
+              </Title>
+              {loadingRecentNews ? (
+                <Group justify="center" p="xl">
+                  <Loader size="lg" />
+                </Group>
+              ) : (
+                <>
+                  <Group gap="lg" align="stretch">
+                    {recentNewsData?.pages.map((page) =>
+                      page.data.map((news) => (
+                        <NewsCard key={news.id} news={news} />
+                      ))
+                    )}
+                  </Group>
+                  {hasNextRecentPage && (
+                    <Group justify="center" mt="xl">
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchNextRecentPage()}
+                        loading={isFetchingNextRecentPage}
+                      >
+                        Load More
+                      </Button>
+                    </Group>
+                  )}
+                </>
+              )}
+            </Box>
+          </>
+        )}
+
+        {isFiltering && (
+          <Box mb="xl">
+            <Title order={3} mb="md">
+              Filtered Results
+            </Title>
+            {loadingFilteredNews ? (
+              <Group justify="center" p="xl">
+                <Loader size="lg" />
+              </Group>
+            ) : (
+              <>
+                <Group gap="lg" align="stretch">
+                  {filteredNewsData?.pages.map((page) =>
+                    page.data.map((news) => (
+                      <NewsCard key={news.id} news={news} />
+                    ))
+                  )}
+                </Group>
+                {hasNextFilteredPage && (
+                  <Group justify="center" mt="xl">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextFilteredPage()}
+                      loading={isFetchingNextFilteredPage}
+                    >
+                      Load More
+                    </Button>
+                  </Group>
+                )}
+              </>
+            )}
+          </Box>
+        )}
       </Container>
     </Flex>
   );

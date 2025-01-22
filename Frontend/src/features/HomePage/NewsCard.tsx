@@ -1,8 +1,10 @@
 import { Card, Image, Text, Tooltip } from "@mantine/core";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 const NewsCard = ({ news }: any) => {
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Card
@@ -22,6 +24,9 @@ const NewsCard = ({ news }: any) => {
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => {
+        navigate(`/news/${news.id}`);
+      }}
     >
       <Card.Section>
         <Image

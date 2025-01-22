@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using NewsGator.Dtos;
@@ -98,11 +99,11 @@ public class NewsLogic
         return mostPopularNews;
     }
 
-    public async Task<NewsWithStringId?> GetSingleNewsForReader(ObjectId id)
+    public async Task<NewsWithStringId?> GetSingleNewsForReader(ObjectId userId, ObjectId newsId)
     {
         var collectionClicks = MongoSessionManager.GetCollection<Click>("clicks");
 
-        var filter = Builders<Click>.Filter.Eq(x => x.NewsId, id);
+        var filter = Builders<Click>.Filter.Eq(x => x.NewsId, newsId);
         var update = Builders<Click>.Update.Inc(x => x.Clicks, 1);
         await collectionClicks.FindOneAndUpdateAsync(filter, update);
 
@@ -115,9 +116,15 @@ public class NewsLogic
             Title = x.Title,
             CreatedAt = x.CreatedAt,
             NewspaperNews = x.NewspaperNews,
-            CommunityNote = x.CommunityNote
+            CommunityNote = x.CommunityNote == null ? null : new CommunityNoteForUser()
+            {
+                Upvotes = x.CommunityNote.Upvotes,
+                Downvotes = x.CommunityNote.Downvotes,
+                Text = x.CommunityNote.Text,
+                Action = x.CommunityNote.Reactions != null ? x.CommunityNote.Reactions.Where(x => x.UserId == userId).Select(x => x.Action).FirstOrDefault() : 0
+            }
         });
-        var singleNews = await collectionNews.Find(x => x.Id == id).Project(projection).FirstOrDefaultAsync();
+        var singleNews = await collectionNews.Find(x => x.Id == newsId).Project(projection).FirstOrDefaultAsync();
 
         return singleNews;
     }

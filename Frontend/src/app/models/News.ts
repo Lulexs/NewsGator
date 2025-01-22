@@ -17,6 +17,7 @@ export interface NewspaperNews {
 
 export interface CommunityNote {
   text: string;
+  action: number;
   upvotes: number;
   downvotes: number;
 }
@@ -27,7 +28,7 @@ export interface News {
   createdAt: Date;
   thumbnail?: string;
   location?: string;
-  communityNotes?: CommunityNote;
+  communityNote?: CommunityNote;
   newspaperNews?: NewspaperNews[];
 }
 

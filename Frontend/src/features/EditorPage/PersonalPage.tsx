@@ -167,9 +167,9 @@ export default observer(function PersonalPage() {
                   placeholder="Add author"
                   value={newAuthor}
                   onChange={(e) => setNewAuthor(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      addItem("authros", newAuthor);
+                      addItem("authors", newAuthor);
                       setNewAuthor("");
                     }
                   }}
@@ -178,7 +178,7 @@ export default observer(function PersonalPage() {
                   c="white"
                   bg="black"
                   onClick={() => {
-                    addItem("authros", newAuthor);
+                    addItem("authors", newAuthor);
                     setNewAuthor("");
                   }}
                 >
@@ -186,11 +186,11 @@ export default observer(function PersonalPage() {
                 </Button>
               </Group>
               <Group mb="lg">
-                {user.subscriptions?.authros?.map((author) => (
+                {user.subscriptions?.authors?.map((author) => (
                   <Chip
                     key={author}
                     checked={false}
-                    onClick={() => removeItem("authros", author)}
+                    onClick={() => removeItem("authors", author)}
                   >
                     {author} <X size={16} />
                   </Chip>

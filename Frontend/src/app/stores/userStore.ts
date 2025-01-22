@@ -91,8 +91,12 @@ export default class UserStore {
   saveUser = async () => {
     if (!this.user) return;
     try {
-      // await agent.Account.updateUser(this.user);
-      console.log("Updating user");
+      this.user.bookmarks?.forEach((x) => console.log({ ...x }));
+      await agent.Account.updateUser({
+        ...this.user,
+        bookmarks: this.user.bookmarks?.map((x) => x.newsId),
+      });
+      console.log(this.user);
     } catch (error) {
       console.error("Failed to save user data:", error);
     }

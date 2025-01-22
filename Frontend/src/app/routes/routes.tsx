@@ -4,6 +4,7 @@ import Register from "../../features/Auth/Register";
 import HomePage from "../../features/HomePage/HomePage";
 import EditorPage from "../../features/EditorPage/EditorPage";
 import ImageEditor from "../../features/ImageEditor/ImageEditor";
+import NewsPage from "../../features/NewsPage/NewsPage";
 
 export const routes: RouteObject[] = [
   { path: "", element: <HomePage /> },
@@ -22,6 +23,10 @@ export const routes: RouteObject[] = [
   {
     path: "/imageeditor/:image",
     element: <ImageEditor />,
+  },
+  {
+    path: "/news/:newsid",
+    element: <NewsPage />,
   },
 ];
 export const router = createBrowserRouter(routes);
