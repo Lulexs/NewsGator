@@ -117,6 +117,12 @@ const PollsAgent = {
   getPollForHome: (userId: string) =>
     requests.get<HomePagePoll>(`/Polls/latest/${userId}`),
   deletePoll: (pollId: string) => requests.del<void>(`/Polls/${pollId}`),
+  vote: (pollId: string, userId: string, option: string) =>
+    requests.put("/Polls/vote", {
+      PollId: pollId,
+      UserId: userId,
+      Option: option,
+    }),
 };
 
 const agent = {

@@ -13,7 +13,7 @@ export interface Poll {
 export interface HomePagePoll {
   id: string;
   question: string;
-  options: PollOption;
-  UserVote?: PollOption;
+  options: PollOption[];
+  userVote?: string;
   datePosted: Date;
 }

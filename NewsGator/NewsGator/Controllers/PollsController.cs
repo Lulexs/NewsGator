@@ -64,9 +64,18 @@ public class PollsController : ControllerBase
                     new { Option = "No", Votes = 48 },
                     new { Option = "Yes", Votes = 53 }
                 },
-            UserVote = "No",
+            UserVote = "Yes",
             DatePosted = DateTime.Now
         });
+    }
+
+    [HttpPut("vote")]
+    public IActionResult Vote([FromBody] VoteDto dto)
+    {
+        Console.WriteLine(dto.PollId);
+        Console.WriteLine(dto.UserId);
+        Console.WriteLine(dto.Option);
+        return Ok();
     }
 
     [HttpDelete("{pollId}")]
