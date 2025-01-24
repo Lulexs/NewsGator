@@ -136,9 +136,11 @@ const TimelinesAgent = {
   deleteTimeline: (timelineId: string) =>
     requests.del(`/Timelines/${timelineId}`),
   getTimeline: (timelineId: string) =>
-    requests.get<Timeline[]>(`/Timelines/${timelineId}`),
-  getTimelines: ({ pageParams }: any) =>
-    requests.get(`/Timelines?cursor=${pageParams}`),
+    requests.get<Timeline>(`/Timelines/${timelineId}`),
+  getTimelines: ({ pageParam }: any) =>
+    requests.get<{ data: Timeline[]; nextCursor: number }>(
+      `/Timelines?cursor=${pageParam}`
+    ),
   updateTimeline: (timeline: UpdateTimelineValues) =>
     requests.put(`/Timelines`, timeline),
 };

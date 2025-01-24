@@ -1,5 +1,7 @@
+using MongoDB.Bson;
 using NewsGator.ApplicationLogic;
 using NewsGator.Dtos;
+using NewsGator.Models;
 
 namespace NewsGator.Controllers;
 
@@ -9,11 +11,13 @@ public class TimelinesController : ControllerBase
 {
     private readonly TimelinesLogic _timelinesLogic;
     private readonly ILogger<TimelinesController> _logger;
+    private readonly NewsLogic _newsLogic; // REMOVE THIS
 
-    public TimelinesController(TimelinesLogic timelinesLogic, ILogger<TimelinesController> logger)
+    public TimelinesController(TimelinesLogic timelinesLogic, ILogger<TimelinesController> logger, NewsLogic newsLogic)
     {
         _timelinesLogic = timelinesLogic;
         _logger = logger;
+        _newsLogic = newsLogic;
     }
 
     [HttpPost("")]
@@ -51,8 +55,13 @@ public class TimelinesController : ControllerBase
     }
 
     [HttpGet("")]
-    public IActionResult GetTimelines([FromQuery] int cursor)
+    public async Task<IActionResult> GetTimelines([FromQuery] int cursor)
     {
-        return Ok();
+        var timelines = new[] {
+            new { Id = ObjectId.GenerateNewId().ToString(), Name = "Test timeline 1", News = await _newsLogic.GetMostRecentNews(0) },
+            new { Id = ObjectId.GenerateNewId().ToString(), Name = "Test timeline 2", News = await _newsLogic.GetMostRecentNews(0) }
+        };
+
+        return Ok(new { data = timelines });
     }
 }
