@@ -8,6 +8,7 @@ import PersonalPage from "./PersonalPage";
 import { useStore } from "../../app/stores/store";
 import NewsEditor from "./NewsEditor/NewsEditor";
 import PollsEditor from "./PollsEditor";
+import TimelinesEditor from "./TimelinesEditor";
 
 enum State {
   Personal,
@@ -138,6 +139,7 @@ export default observer(function EditorPage() {
         {mode == State.Personal && <PersonalPage />}
         {mode == State.News && <NewsEditor />}
         {mode == State.Polls && <PollsEditor />}
+        {mode == State.Timelines && <TimelinesEditor />}
       </Flex>
     </Flex>
   );

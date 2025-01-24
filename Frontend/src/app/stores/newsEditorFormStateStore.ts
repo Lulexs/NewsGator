@@ -63,13 +63,13 @@ export default class NewsEditorFormStateStore {
 
   clearCommunityNote = () => {
     if (this.editedNews) {
-      this.editedNews.communityNotes = undefined;
+      this.editedNews.communityNote = undefined;
     }
   };
 
   changeCommunityNote = (val: string) => {
-    if (this.editedNews && this.editedNews.communityNotes) {
-      this.editedNews.communityNotes.text = val;
+    if (this.editedNews && this.editedNews.communityNote) {
+      this.editedNews.communityNote.text = val;
     }
   };
 

@@ -9,6 +9,11 @@ import {
 import { EditorPageSimplifiedNews, News } from "../models/News";
 import { Review } from "../models/Review";
 import { HomePagePoll, Poll } from "../models/Poll";
+import {
+  CreateTimelineValues,
+  Timeline,
+  UpdateTimelineValues,
+} from "../models/Timelines";
 
 axios.defaults.baseURL = "http://localhost:5272/api";
 
@@ -125,12 +130,26 @@ const PollsAgent = {
     }),
 };
 
+const TimelinesAgent = {
+  createTimeline: (timeline: CreateTimelineValues) =>
+    requests.post("/Timelines", timeline),
+  deleteTimeline: (timelineId: string) =>
+    requests.del(`/Timelines/${timelineId}`),
+  getTimeline: (timelineId: string) =>
+    requests.get<Timeline[]>(`/Timelines/${timelineId}`),
+  getTimelines: ({ pageParams }: any) =>
+    requests.get(`/Timelines?cursor=${pageParams}`),
+  updateTimeline: (timeline: UpdateTimelineValues) =>
+    requests.put(`/Timelines`, timeline),
+};
+
 const agent = {
   Account,
   NewsAgent,
   HomePageNewsAgent,
   NewsPageAgent,
   PollsAgent,
+  TimelinesAgent,
 };
 
 export default agent;
