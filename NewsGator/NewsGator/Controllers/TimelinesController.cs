@@ -49,9 +49,9 @@ public class TimelinesController : ControllerBase
     }
 
     [HttpGet("{timelineId}")]
-    public IActionResult GetTimeline(string timelineId)
+    public async Task<IActionResult> GetTimeline(string timelineId)
     {
-        return Ok();
+        return Ok(new { Id = ObjectId.GenerateNewId().ToString(), Name = "Test timeline 1", News = await _newsLogic.GetMostRecentNews(0) });
     }
 
     [HttpGet("")]

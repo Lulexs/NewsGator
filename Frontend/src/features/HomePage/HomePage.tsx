@@ -14,6 +14,7 @@ import {
   Text,
   Card,
   Stack,
+  Badge,
 } from "@mantine/core";
 import Header from "../Header/Header";
 import NewsCard from "./NewsCard";
@@ -21,6 +22,7 @@ import agent from "../../app/api/agent";
 import { useStore } from "../../app/stores/store";
 import { HomePagePoll } from "../../app/models/Poll";
 import { observer } from "mobx-react-lite";
+import { useNavigate } from "react-router";
 
 export default observer(function HomePage() {
   const [title, setTitle] = useState("");
@@ -33,6 +35,7 @@ export default observer(function HomePage() {
   const { userStore } = useStore();
   const [currentPoll, setCurrentPoll] = useState<HomePagePoll | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
+  const navigate = useNavigate();
 
   const { data: mostPopularNews, isLoading: loadingPopularNews } = useQuery({
     queryKey: ["mostPopularNews"],
@@ -121,6 +124,21 @@ export default observer(function HomePage() {
       console.error("Vote failed", error);
     }
   };
+
+  const {
+    data: timelinesData,
+    fetchNextPage: fetchNextTimelinesPage,
+    hasNextPage: hasNextTimelinesPage,
+    isFetchingNextPage: isFetchingNextTimelinesPage,
+    isLoading: loadingTimelines,
+  } = useInfiniteQuery({
+    queryKey: ["homepageTimelines"],
+    queryFn: ({ pageParam = 0 }) =>
+      agent.TimelinesAgent.getTimelines({ pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+
   return (
     <Flex direction="column" mih="100vh">
       <Header />
@@ -351,6 +369,61 @@ export default observer(function HomePage() {
                   {currentPoll.options.reduce((sum, opt) => sum + opt.votes, 0)}
                 </Text>
               </Card>
+
+              {loadingTimelines ? (
+                <Group justify="center">
+                  <Loader size="sm" />
+                </Group>
+              ) : (
+                <Stack
+                  gap="xs"
+                  mt="lg"
+                  styles={{
+                    root: {
+                      border: "1px solid rgba(220, 220, 220, 50)",
+                      borderRadius: "10px",
+                    },
+                  }}
+                >
+                  {timelinesData?.pages.map((page) =>
+                    page.data.map((timeline) => (
+                      <Button
+                        key={timeline.id}
+                        variant="light"
+                        color="gray"
+                        fullWidth
+                        justify="space-between"
+                        onClick={() => navigate(`/timeline/${timeline.id}`)}
+                      >
+                        <Flex
+                          direction="column"
+                          w="100%"
+                          align="flex-start"
+                          gap="xs"
+                        >
+                          <Flex w="100%" justify="space-between" align="center">
+                            <Text fw={500}>{timeline.name}</Text>
+                            <Badge color="gray" variant="light" size="sm">
+                              {timeline.news?.length || 0} news
+                            </Badge>
+                          </Flex>
+                        </Flex>
+                      </Button>
+                    ))
+                  )}
+                  {hasNextTimelinesPage && (
+                    <Group justify="center" mt="xs">
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchNextTimelinesPage()}
+                        loading={isFetchingNextTimelinesPage}
+                      >
+                        Load More
+                      </Button>
+                    </Group>
+                  )}
+                </Stack>
+              )}
             </Box>
           )}
         </Flex>

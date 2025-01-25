@@ -5,6 +5,7 @@ import HomePage from "../../features/HomePage/HomePage";
 import EditorPage from "../../features/EditorPage/EditorPage";
 import ImageEditor from "../../features/ImageEditor/ImageEditor";
 import NewsPage from "../../features/NewsPage/NewsPage";
+import TimelinePage from "../../features/TimelinePage/TimelinePage";
 
 export const routes: RouteObject[] = [
   { path: "", element: <HomePage /> },
@@ -27,6 +28,10 @@ export const routes: RouteObject[] = [
   {
     path: "/news/:newsid",
     element: <NewsPage />,
+  },
+  {
+    path: "/timeline/:timelineId",
+    element: <TimelinePage />,
   },
 ];
 export const router = createBrowserRouter(routes);

@@ -15,10 +15,13 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { useStore } from "../../app/stores/store";
 import { UserSubscriptions } from "../../app/models/User";
+import { useNavigate } from "react-router";
 
 export default observer(function PersonalPage() {
   const { userStore } = useStore();
   const user = userStore.user!;
+
+  const navigate = useNavigate();
 
   const [newCategory, setNewCategory] = useState("");
   const [newAuthor, setNewAuthor] = useState("");
@@ -251,6 +254,7 @@ export default observer(function PersonalPage() {
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}
+                    onClick={() => navigate(`/news/${bookmark.newsId}`)}
                   >
                     {bookmark.thumbnail && (
                       <Image
