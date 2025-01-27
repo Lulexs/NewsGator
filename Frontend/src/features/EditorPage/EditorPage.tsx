@@ -9,6 +9,7 @@ import { useStore } from "../../app/stores/store";
 import NewsEditor from "./NewsEditor/NewsEditor";
 import PollsEditor from "./PollsEditor";
 import TimelinesEditor from "./TimelinesEditor";
+import { UserRole } from "../../app/models/User";
 
 enum State {
   Personal,
@@ -137,9 +138,15 @@ export default observer(function EditorPage() {
           </Button>
         </Stack>
         {mode == State.Personal && <PersonalPage />}
-        {mode == State.News && <NewsEditor />}
-        {mode == State.Polls && <PollsEditor />}
-        {mode == State.Timelines && <TimelinesEditor />}
+        {mode == State.News && userStore.user.role === UserRole.Editor && (
+          <NewsEditor />
+        )}
+        {mode == State.Polls && userStore.user.role === UserRole.Editor && (
+          <PollsEditor />
+        )}
+        {mode == State.Timelines && userStore.user.role === UserRole.Editor && (
+          <TimelinesEditor />
+        )}
       </Flex>
     </Flex>
   );

@@ -208,7 +208,7 @@ export default observer(function PersonalPage() {
                   placeholder="Add news subscription"
                   value={newNews}
                   onChange={(e) => setNewNews(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       addItem("news", newNews);
                       setNewNews("");
