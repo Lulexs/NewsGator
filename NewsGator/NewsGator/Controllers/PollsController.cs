@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MongoDB.Bson;
 using NewsGator.ApplicationLogic;
 using NewsGator.Dtos;
@@ -19,15 +20,50 @@ public class PollsController : ControllerBase
     }
 
     [HttpPost("")]
-    public IActionResult CreatePoll([FromBody] CreatePollDto dto)
+    public async Task<IActionResult> CreatePoll([FromBody] CreatePollDto dto)
     {
-        var pol = new Poll()
+        try
         {
-            Question = dto.Question,
-            Options = [.. dto.Options.Select(x => new PollOption() { Votes = 0, Option = x })],
-            DatePosted = DateTime.Now,
-        };
-        return Ok(pol);
+            if(dto == null || string.IsNullOrEmpty(dto.Question) || dto.Options == null || dto.Options.Count < 2)
+            {
+                _logger.LogWarning("Invalid data provided for poll creation");
+                return BadRequest("Invalid poll data. Please ensure question and options are provided.");
+           
+            }
+
+            var duplicateOptions = dto.Options
+            .GroupBy(option => option)
+            .Where(group => group.Count() > 1)
+            .Select(group => new { Option = group.Key, Count = group.Count() })
+            .ToList();
+
+            if (duplicateOptions.Any())
+            {
+                var duplicateMessages = duplicateOptions
+                    .Select(dup => $"Option '{dup.Option}' appears {dup.Count} times.")
+                    .ToList();
+
+                _logger.LogWarning("Duplicate options found: {Duplicates}", string.Join(", ", duplicateMessages));
+                return BadRequest(new
+                {
+                    Message = "Duplicate options found in the poll.",
+                    Duplicates = duplicateMessages
+                });
+            }
+
+
+
+            await _pollsLogic.CreatePoll(dto.Question, dto.Options);
+
+
+            _logger.LogInformation("Poll created successfully with question: {Question}", dto.Question);
+            return Ok("Poll created successfully");
+        }
+        catch(Exception ec)
+        {
+            _logger.LogError("Error occured while adding new poll, {}", ec.Message);
+            return StatusCode(500, "Failed to create new poll, please try again latter");
+        }
     }
 
     [HttpGet("")]

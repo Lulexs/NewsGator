@@ -26,4 +26,7 @@ public class PollsLogic
 
         await collection.InsertOneAsync(poll);
     }
+
+
+    
 }
