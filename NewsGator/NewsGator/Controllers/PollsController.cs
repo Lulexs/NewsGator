@@ -4,6 +4,7 @@ using NewsGator.ApplicationLogic;
 using NewsGator.Dtos;
 using NewsGator.Models;
 
+// TODO: napravi indeks za po datumu kreiranja
 namespace NewsGator.Controllers;
 
 [Route("api/[controller]")]
@@ -53,11 +54,11 @@ public class PollsController : ControllerBase
 
 
 
-            await _pollsLogic.CreatePoll(dto.Question, dto.Options);
+            var createdPoll = await _pollsLogic.CreatePoll(dto.Question, dto.Options);
 
 
-            _logger.LogInformation("Poll created successfully with question: {Question}", dto.Question);
-            return Ok("Poll created successfully");
+             _logger.LogInformation("Poll created successfully with question: {Question}, ID: {PollId}", createdPoll.Question, createdPoll.Id);
+            return Ok("Poll " + createdPoll.Question + " created successfully");
         }
         catch(Exception ec)
         {
@@ -67,56 +68,101 @@ public class PollsController : ControllerBase
     }
 
     [HttpGet("")]
-    public IActionResult GetPollsForEditor()
+    public async Task<IActionResult> GetPollsForEditor()
     {
-        var random = new Random();
-        var polls = Enumerable.Range(1, 10)
-            .Select(i => new
+        try 
+        {
+            var polls = await _pollsLogic.GetPollsSortedByDate();
+            if (!polls.Any())
             {
-                Id = ObjectId.GenerateNewId().ToString(),
-                Question = $"Do you support *topic {i}*?",
-                Options = Enumerable.Range(1, random.Next(2, 6))
-                    .Select(j => new
-                    {
-                        Option = $"Option {j}",
-                        Votes = random.Next(0, 100)
-                    }).ToArray(),
-                DatePosted = DateTime.Now.AddDays(-random.Next(0, 31))
-            }).ToArray();
-        return Ok(polls);
+                _logger.LogInformation("No polls found.");
+                return NotFound(new { Message = "No polls found." });
+            }
+
+            return Ok(polls);
+        }
+        catch(Exception ec)
+        {
+            _logger.LogError("Error occured while fetching polls, {}", ec.Message);
+            return StatusCode(500, "Failed to fetch polls, please try again latter");
+        }
     }
 
     [HttpGet("latest/{userId}")]
-    public IActionResult GetPollForHomePage(string userId)
+    public async Task<IActionResult> GetPollForHomePage(string userId)
     {
         // Lulexs note: Returns latest poll
 
-        return Ok(new
+        try
         {
-            Id = ObjectId.GenerateNewId().ToString(),
-            Question = "Do you support toppic something",
-            Options = new[]
-                {
-                    new { Option = "No", Votes = 48 },
-                    new { Option = "Yes", Votes = 53 }
-                },
-            UserVote = "Yes",
-            DatePosted = DateTime.Now
-        });
+            var latestPoll = await _pollsLogic.GetLatestPoll();
+            if (latestPoll == null)
+            {
+                _logger.LogInformation("No polls found.");
+                return NotFound(new { Message = "No polls found." });
+            }
+            _logger.LogInformation("Latest poll found with question: {Question}, ID: {PollId}", latestPoll.Question, latestPoll.Id);
+            return Ok(latestPoll);
+        }
+        catch(Exception ec)
+        {
+            _logger.LogError("Error occured while fetching latest poll, {}", ec.Message);
+            return StatusCode(500, "Failed to fetch latest poll, please try again latter");
+        }
+
     }
 
     [HttpPut("vote")]
-    public IActionResult Vote([FromBody] VoteDto dto)
+    public async Task<IActionResult> Vote([FromBody] VoteDto dto)
     {
-        Console.WriteLine(dto.PollId);
-        Console.WriteLine(dto.UserId);
-        Console.WriteLine(dto.Option);
-        return Ok();
+        try
+        {
+            if (dto == null || string.IsNullOrEmpty(dto.PollId) || string.IsNullOrEmpty(dto.UserId) || string.IsNullOrEmpty(dto.Option))
+            {
+                _logger.LogWarning("Invalid data provided for voting");
+                return BadRequest("Invalid vote data. Please ensure poll ID, user ID and option are provided.");
+            }
+
+            var result = await _pollsLogic.Vote(dto.PollId, dto.UserId, dto.Option);
+            if (!result)
+            {
+                _logger.LogWarning("Failed to vote on poll with ID {PollId}", dto.PollId);
+                return BadRequest("Failed to vote on the poll.");
+            }
+
+            _logger.LogInformation("Vote on poll with ID {PollId} successful", dto.PollId);
+            return Ok("Vote successful for poll " + dto.PollId + " and option " + dto.Option);
+        }
+        catch(Exception ec)
+        {
+            _logger.LogError("Error occured while voting, {}", ec.Message);
+            return StatusCode(500, "Failed to vote, please try again latter");
+        }
     }
 
     [HttpDelete("{pollId}")]
-    public IActionResult DeletePoll(string pollId)
+    public async Task<IActionResult> DeletePoll(string pollId)
     {
-        return Ok();
+        try
+        {
+            var result = await _pollsLogic.DeletePoll(pollId);
+            if (!result)
+            {
+                _logger.LogWarning("Failed to delete poll with ID {PollId}", pollId);
+                return BadRequest("Failed to delete poll.");
+            }
+            _logger.LogInformation("Poll with ID {PollId} deleted successfully", pollId);
+            return Ok("Poll " + pollId + " deleted successfully");
+        }
+        catch(FormatException)
+        {
+            _logger.LogWarning("Invalid poll ID provided for deletion");
+            return BadRequest("Invalid poll ID provided for deletion");
+        }
+        catch(Exception ec)
+        {
+            _logger.LogError("Error occured while deleting poll, {}", ec.Message);
+            return StatusCode(500, "Failed to delete poll, please try again latter");
+        }
     }
 }
