@@ -5,6 +5,11 @@ using System.Runtime.Versioning;
 
 namespace NewsGator.Controllers;
 
+public class UrlDto
+{
+    public required string Url { get; set; }
+}
+
 [Route("api/[controller]")]
 [ApiController]
 public class NewsPageController : ControllerBase
@@ -20,19 +25,19 @@ public class NewsPageController : ControllerBase
     }
 
     [HttpPost("acquire")]
-    public async Task<ActionResult<string>> AcquireNewsPageImage([FromBody] string url)
+    public async Task<ActionResult<string>> AcquireNewsPageImage([FromBody] UrlDto url)
     {
         try
         {
             string guid = Guid.NewGuid().ToString().Replace("-", "_");
-            await _service.AcquireAsync(url, guid);
+            await _service.AcquireAsync(url.Url, guid);
 
             return Ok(guid);
         }
         catch (Exception ec)
         {
             _logger.LogError("Failed to acquire image for url {} due to {}", url, ec.Message);
-            return BadRequest($"Failed to load image from following url {url}");
+            return BadRequest($"Failed to load image from following url {url.Url}");
         }
     }
 

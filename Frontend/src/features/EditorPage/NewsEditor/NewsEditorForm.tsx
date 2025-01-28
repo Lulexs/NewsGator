@@ -52,7 +52,7 @@ export default observer(function NewsEditorForm() {
         }
       />
 
-      {editedNews.communityNotes ? (
+      {editedNews.communityNote ? (
         <Paper p="md" withBorder>
           <Group gap="apart" mb="sm">
             <Text fw={500}>Community Notes</Text>
@@ -61,15 +61,15 @@ export default observer(function NewsEditorForm() {
             />
           </Group>
           <Textarea
-            value={editedNews.communityNotes.text}
+            value={editedNews.communityNote.text}
             onChange={(e) =>
               newsEditorFormStateStore.changeCommunityNote(e.target.value)
             }
           />
           <Group mt="sm">
-            <Text size="sm">Upvotes: {editedNews.communityNotes.upvotes}</Text>
+            <Text size="sm">Upvotes: {editedNews.communityNote.upvotes}</Text>
             <Text size="sm">
-              Downvotes: {editedNews.communityNotes.downvotes}
+              Downvotes: {editedNews.communityNote.downvotes}
             </Text>
           </Group>
         </Paper>

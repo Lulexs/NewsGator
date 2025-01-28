@@ -39,6 +39,7 @@ export default function NewspaperNewsDialog({
   const handleSubmit = async () => {
     setOverlayVisible(true);
     formData.content = await agent.NewsAgent.getNewsFromUrl(formData.url);
+    console.log(formData.content);
     setOverlayVisible(false);
 
     onAdd(formData);

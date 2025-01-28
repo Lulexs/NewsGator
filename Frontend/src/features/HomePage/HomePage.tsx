@@ -329,7 +329,6 @@ export default observer(function HomePage() {
                         : 0;
 
                     const isUserVote = option.option === currentPoll.userVote;
-                    console.log(hasVoted, option.option, currentPoll.userVote);
 
                     return (
                       <Button

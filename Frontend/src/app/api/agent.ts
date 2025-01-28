@@ -50,11 +50,7 @@ const Account = {
 const NewsAgent = {
   getSingleNews: (newsId: string) => requests.get<News>(`/News/${newsId}`),
   getNewsFromUrl: (newsUrl: string) =>
-    requests.post<string>("/NewsPage/acquire", newsUrl, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }),
+    requests.post<string>("/NewsPage/acquire", { Url: newsUrl }),
   cropImage: (
     imageName: string,
     top: number,
