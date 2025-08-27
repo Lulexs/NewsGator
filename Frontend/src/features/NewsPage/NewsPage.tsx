@@ -79,14 +79,15 @@ export default function NewsPage() {
   const handleVote = async (type: "upvote" | "downvote") => {
     const newAction = type === "upvote" ? 1 : -1;
     const isToggling = currentAction === newAction;
+    const toggledAction = isToggling ? 0 : newAction;
 
-    setCurrentAction(isToggling ? 0 : newAction);
+    setCurrentAction(toggledAction);
 
     try {
       await agent.NewsPageAgent.upvoteDownvote(
         news!.id,
         userStore.user!.id,
-        newAction
+        toggledAction
       );
 
       queryClient.invalidateQueries({ queryKey: ["singleNews", newsid] });
@@ -222,9 +223,7 @@ export default function NewsPage() {
                     >
                       <ThumbsUp size={16} />
                       <Text size="sm">
-                        {news.communityNote.upvotes + currentAction == 1
-                          ? 1
-                          : 0}
+                        {news.communityNote.upvotes}
                       </Text>
                     </Group>
                     <Group
@@ -237,9 +236,7 @@ export default function NewsPage() {
                     >
                       <ThumbsDown size={16} />
                       <Text size="sm">
-                        {news.communityNote.downvotes + currentAction == -1
-                          ? 1
-                          : 0}
+                        {news.communityNote.downvotes}
                       </Text>
                     </Group>
                   </Group>

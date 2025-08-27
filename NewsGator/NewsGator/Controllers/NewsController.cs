@@ -64,6 +64,7 @@ public class NewsController : ControllerBase
             {
                 return NotFound("News not found, possibly deleted");
             }
+
             return Ok(new
             {
                 Id = res.Id.ToString(),
@@ -228,15 +229,18 @@ public class NewsController : ControllerBase
         }
     }
 
-    // TODO
     [HttpPut("upvotedownvote")]
-    public IActionResult UpvoteDownvoteCommNote([FromBody] UpvoteDownvoteDto dto)
+    public async Task<IActionResult> UpvoteDownvote([FromBody] UpvoteDownvoteDto dto)
     {
-        Console.WriteLine(dto.UserId);
-        Console.WriteLine(dto.NewsId);
-        Console.WriteLine(dto.Action);
-        // action = "upvote"
-        // action = "downvote"
-        return Ok();
+        try
+        {
+            await _newsLogic.UpvoteDownvote(ObjectId.Parse(dto.NewsId), ObjectId.Parse(dto.UserId), dto.Action);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Error occured while upvoting/downvoting community note for news with id {}, {}", dto.NewsId, e.Message);
+            return BadRequest(e.Message);
+        }
     }
 }

@@ -303,4 +303,36 @@ public class NewsLogic
 
     }
 
+    public async Task UpvoteDownvote(ObjectId newsId, ObjectId userId, int action)
+    {
+        if (action != 1 && action != -1 && action != 0)
+            throw new ArgumentException("Action must be either 1 (upvote), -1 (downvote) or 0 (remove vote).");
+
+        var collection = MongoSessionManager.GetCollection<News>("news");
+
+        var existingAction = await collection.Find(n => n.Id == newsId)
+            .Project(n => n.CommunityNote!.Reactions.Where(r => r.UserId == userId).Select(r => r.Action).FirstOrDefault())
+            .FirstOrDefaultAsync();
+
+        if (existingAction != 0)
+        {
+            var updateExisting = Builders<News>.Update.Combine(
+                Builders<News>.Update.PullFilter(n => n.CommunityNote!.Reactions, r => r.UserId == userId),
+                Builders<News>.Update.Inc(n => existingAction == 1 ? n.CommunityNote!.Upvotes : n.CommunityNote!.Downvotes, -1)
+            );
+            await collection.UpdateOneAsync(n => n.Id == newsId, updateExisting);
+        }
+
+        if (action != 0)
+        {
+            var update = Builders<News>.Update.Combine(
+                Builders<News>.Update.Push(n => n.CommunityNote!.Reactions, new Reaction { UserId = userId, Action = action }),
+                Builders<News>.Update.Inc(n => action == 1 ? n.CommunityNote!.Upvotes : n.CommunityNote!.Downvotes, 1)
+            );
+
+            await collection.UpdateOneAsync(n => n.Id == newsId, update);
+        }
+
+    }
+
 }
