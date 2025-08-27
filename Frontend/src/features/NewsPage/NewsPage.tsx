@@ -53,7 +53,12 @@ export default function NewsPage() {
   });
 
   const reviewMutation = useMutation({
-    mutationFn: agent.NewsPageAgent.leaveReview,
+    mutationFn: (data: any) => agent.NewsPageAgent.leaveReview(data.newsid, {
+      value: data.value,
+      comment: data.comment,
+      commenter: data.commenter,
+      avatar: data.avatar,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", newsid] });
       setComment("");
@@ -63,6 +68,7 @@ export default function NewsPage() {
 
   const handleSubmitReview = () => {
     reviewMutation.mutate({
+      newsid,
       comment,
       value: rating,
       commenter: userStore.user!.username,

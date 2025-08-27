@@ -92,13 +92,19 @@ const HomePageNewsAgent = {
       `/News/filter?cursor=${pageParam}`,
       filterData
     ),
+  getFilterOptions: () =>
+    requests.get<{
+      categories: string[];
+      tags: string[];
+      newspapers: string[];
+    }>("/News/filteroptions"),
 };
 
 const NewsPageAgent = {
   getReviews: (newsId: string) =>
     requests.get<Review[]>(`/News/reviews/${newsId}`),
-  leaveReview: (review: Review) =>
-    requests.post<void>(`/News/reviews`, {
+  leaveReview: (newsId: string, review: Review) =>
+    requests.post<void>(`/News/leavereview/${newsId}`, {
       Value: review.value,
       Comment: review.comment,
       Commenter: review.commenter,

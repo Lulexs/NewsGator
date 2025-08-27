@@ -5,6 +5,7 @@ using NewsGator.Models;
 using NewsGator.Persistence;
 
 namespace NewsGator.ApplicationLogic;
+
 public class NewsLogic
 {
     public async Task CreateNews(NewsDto dto)
@@ -176,4 +177,130 @@ public class NewsLogic
 
         return results;
     }
+
+    public async Task<FilterOptionsDto> GetFilterOptions()
+    {
+        var collection = MongoSessionManager.GetCollection<News>("news");
+
+        var filter = Builders<News>.Filter.Empty;
+
+        var categoriesTask = collection.Distinct<string>("NewspaperNews.Category", filter).ToListAsync();
+        var tagsTask = collection.Distinct<string>("NewspaperNews.Tags", filter).ToListAsync();
+        var papersTask = collection.Distinct<string>("NewspaperNews.Newspaper", filter).ToListAsync();
+
+        await Task.WhenAll(categoriesTask, tagsTask, papersTask);
+
+        return new FilterOptionsDto
+        {
+            Categories = categoriesTask.Result.Where(s => !string.IsNullOrWhiteSpace(s)).OrderBy(s => s).ToList(),
+            Tags = tagsTask.Result.Where(tag => !string.IsNullOrWhiteSpace(tag)).OrderBy(tag => tag).ToList(),
+            Newspapers = papersTask.Result.Where(s => !string.IsNullOrWhiteSpace(s)).OrderBy(s => s).ToList()
+        };
+    }
+
+    public async Task<FilteredNewsResultDto> GetFilteredNews(NewsFilterDto filterDto, int count)
+    {
+        var collection = MongoSessionManager.GetCollection<News>("news");
+
+        var titleFilter = Builders<News>.Filter.Empty;
+        var locationFilter = Builders<News>.Filter.Empty;
+        var categoriesFilter = Builders<News>.Filter.Empty;
+        var tagsFilter = Builders<News>.Filter.Empty;
+        var coveragesFilter = Builders<News>.Filter.Empty;
+        var authorFilter = Builders<News>.Filter.Empty;
+
+        if (!string.IsNullOrEmpty(filterDto.Title))
+        {
+            titleFilter = Builders<News>.Filter.Regex("Title", new BsonRegularExpression(filterDto.Title, "i"));
+        }
+
+        if (!string.IsNullOrEmpty(filterDto.Location))
+        {
+            locationFilter = Builders<News>.Filter.Regex("Location", new BsonRegularExpression(filterDto.Location, "i"));
+        }
+
+        if (filterDto.Categories != null && filterDto.Categories.Count > 0)
+        {
+            categoriesFilter = Builders<News>.Filter.In("NewspaperNews.Category", filterDto.Categories);
+        }
+
+        if (filterDto.Tags != null && filterDto.Tags.Count > 0)
+        {
+            tagsFilter = Builders<News>.Filter.In("NewspaperNews.Tags", filterDto.Tags);
+        }
+
+        if (filterDto.Coverages != null && filterDto.Coverages.Count > 0)
+        {
+            coveragesFilter = Builders<News>.Filter.In("NewspaperNews.Newspaper", filterDto.Coverages);
+        }
+
+        if (!string.IsNullOrEmpty(filterDto.Author))
+        {
+            authorFilter = Builders<News>.Filter.Regex("NewspaperNews.Author", new BsonRegularExpression(filterDto.Author, "i"));
+        }
+
+        var filter = Builders<News>.Filter.And(titleFilter, locationFilter, categoriesFilter, tagsFilter, coveragesFilter, authorFilter);
+
+        var projection = Builders<News>.Projection.Expression(news => new NewsForEditor
+        {
+            Id = news.Id.ToString(),
+            Title = news.Title,
+            CreatedAt = news.CreatedAt,
+            Thumbnail = news.Thumbnail
+        });
+
+        var sort = Builders<News>.Sort.Descending(p => p.CreatedAt);
+
+        var filteredNewsCount = await collection.CountDocumentsAsync(filter);
+
+        var results = await collection.Find(filter)
+                                        .Project(projection)
+                                        .Skip(count)
+                                        .Limit(8)
+                                        .Sort(sort)
+                                        .ToListAsync();
+
+        return new FilteredNewsResultDto { Results = results, FilteredNewsCount = filteredNewsCount };
+
+    }
+
+    public async Task<List<ReviewDto>> GetNewsReviews(ObjectId newsId)
+    {
+        var collection = MongoSessionManager.GetCollection<Review>("reviews");
+
+        var projection = Builders<Review>.Projection.Expression(review => new ReviewDto
+        {
+            Comment = review.Comment!,
+            Commenter = review.Commenter!,
+            Avatar = review.Avatar!,
+            Value = review.Value
+        });
+
+        var sort = Builders<Review>.Sort.Descending(p => p.Value);
+
+        var res = await collection.Find(review => review.NewsId == newsId)
+                                   .Project(projection)
+                                   .Sort(sort)
+                                   .ToListAsync();
+
+        return res ?? new List<ReviewDto>();
+    }
+
+    public async Task LeaveReview(ObjectId newsId, ReviewDto dto)
+    {
+        var collection = MongoSessionManager.GetCollection<Review>("reviews");
+
+        var review = new Review
+        {
+            NewsId = newsId,
+            Commenter = dto.Commenter,
+            Comment = dto.Comment,
+            Avatar = dto.Avatar,
+            Value = dto.Value
+        };
+
+        await collection.InsertOneAsync(review);
+
+    }
+
 }

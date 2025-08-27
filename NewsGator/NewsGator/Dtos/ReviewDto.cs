@@ -1,6 +1,6 @@
 namespace NewsGator.Dtos;
 
-public class LeaveReviewDto
+public class ReviewDto
 {
     public required string Commenter { get; set; }
     public required string Avatar { get; set; }

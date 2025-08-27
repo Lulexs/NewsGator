@@ -164,78 +164,68 @@ public class NewsController : ControllerBase
         }
     }
 
-    // TODO
+    [HttpGet("filteroptions")]
+    public async Task<ActionResult<FilterOptionsDto>> GetFilterOptions()
+    {
+        try
+        {
+            var filterOptions = await _newsLogic.GetFilterOptions();
+            return Ok(filterOptions);
+        }
+        catch (Exception ec)
+        {
+            _logger.LogError("Error occured while fetching all filter options, {}", ec.Message);
+            return BadRequest("Failed to acquire filter options, please try again");
+        }
+    }
+
     [HttpPost("filter")]
-    public async Task<ActionResult<List<NewsForEditor>>> GetFilteredNews([FromBody] NewsFilterDto dto, int cursor)
+    public async Task<ActionResult<List<NewsForEditor>>> GetFilteredNews([FromBody] NewsFilterDto dto, [FromQuery] int cursor)
     {
-        Console.WriteLine(dto.Title);
-        Console.WriteLine(dto.Location);
-        Console.WriteLine(dto.Author);
-        if (dto.Categories is not null)
+        try
         {
-            foreach (var a in dto.Categories)
-            {
-                Console.Write(a + " ");
-            }
-            Console.WriteLine();
+            var filteredNews = await _newsLogic.GetFilteredNews(dto, cursor);
+
+            if (cursor + 8 < filteredNews.FilteredNewsCount)
+                return Ok(new { data = filteredNews.Results, nextCursor = cursor + 8 });
+
+            return Ok(new { data = filteredNews.Results });
         }
-        if (dto.Tags is not null)
+        catch (Exception ec)
         {
-            foreach (var a in dto.Tags)
-            {
-                Console.Write(a + " ");
-            }
-            Console.WriteLine();
+            _logger.LogError("Error occured while getting filtered news, {}", ec.Message);
+            return BadRequest("Failed to acquire news, please try again");
         }
-        if (dto.Coverages is not null)
-        {
-            foreach (var a in dto.Coverages)
-            {
-                Console.Write(a + " ");
-            }
-            Console.WriteLine();
-        }
-
-        var totalNews = await _newsLogic.GetNewsCount();
-        var news = await _newsLogic.GetMostRecentNews(cursor);
-
-        if (cursor + 8 < totalNews)
-            return Ok(new { data = news, nextCursor = cursor + 8 });
-
-        return Ok(new { data = news });
     }
 
-    private static ConcurrentBag<Review> templist = new ConcurrentBag<Review>(
-        new[] {
-        new Review { Comment = "Jako lose iznose u informeru", Value = 8, Commenter = "Lulexs", Avatar = "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-1.png" },
-        new Review { Comment = "Dobra vest", Value = 9, Commenter = "Velja", Avatar = "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-5.png" }
-        }
-    );
-
-    // TODO
     [HttpGet("reviews/{newsId}")]
-    public IActionResult GetNewsReviews(string newsId)
+    public async Task<ActionResult<List<ReviewDto>>> GetNewsReviews(string newsId)
     {
-        return Ok(templist);
+        try
+        {
+            var reviews = await _newsLogic.GetNewsReviews(ObjectId.Parse(newsId));
+            return Ok(reviews);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Error occured while fetching reviews for news with id {}, {}", newsId, e.Message);
+            return BadRequest("Failed to fetch reviews, please try again");
+        }
     }
 
-    // TODO
-    [HttpPost("reviews")]
-    public IActionResult LeaveReview([FromBody] LeaveReviewDto dto)
+    [HttpPost("leavereview/{newsId}")]
+    public async Task<IActionResult> LeaveReview(string newsId, [FromBody] ReviewDto dto)
     {
-        Console.WriteLine(dto.Comment);
-        Console.WriteLine(dto.Commenter);
-        Console.WriteLine(dto.Avatar);
-        Console.WriteLine(dto.Value);
-        var rivju = new Review
+        try
         {
-            Comment = dto.Comment,
-            Value = dto.Value,
-            Commenter = dto.Commenter,
-            Avatar = dto.Avatar
-        };
-        templist.Add(rivju);
-        return Ok(rivju);
+            await _newsLogic.LeaveReview(ObjectId.Parse(newsId), dto);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Error occured while leaving review for news with id {}, {}", newsId, e.Message);
+            return BadRequest("Failed to leave review, please try again");
+        }
     }
 
     // TODO

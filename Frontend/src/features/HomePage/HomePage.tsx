@@ -85,6 +85,13 @@ export default observer(function HomePage() {
     enabled: isFiltering,
   });
 
+const { 
+  data: filterOptions
+} = useQuery({
+  queryKey: ["filterOptions"],
+  queryFn: () => agent.HomePageNewsAgent.getFilterOptions(),
+});
+
   const handleFilterSubmit = () => {
     setIsFiltering(true);
     refetchFilteredNews();
@@ -166,7 +173,7 @@ export default observer(function HomePage() {
                 <MultiSelect
                   label="Categories"
                   placeholder="Select categories"
-                  data={["Category1", "Category2"]}
+                  data={filterOptions?.categories || []}
                   value={categories}
                   onChange={setCategories}
                 />
@@ -175,14 +182,14 @@ export default observer(function HomePage() {
                 <MultiSelect
                   label="Tags"
                   placeholder="Select tags"
-                  data={["tag1", "tag2"]}
+                  data={filterOptions?.tags || []}
                   value={tags}
                   onChange={setTags}
                 />
                 <MultiSelect
                   label="Coverages"
                   placeholder="Select coverages"
-                  data={["Politika", "Novosti"]}
+                  data={filterOptions?.newspapers || []}
                   value={coverages}
                   onChange={setCoverages}
                 />
