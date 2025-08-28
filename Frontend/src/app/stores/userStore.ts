@@ -1,13 +1,9 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import agent from "../api/agent";
-import {
-  User,
-  UserLoginValues,
-  UserRegisterValues,
-  UserSubscriptions,
-} from "../models/User";
+import { User, UserLoginValues, UserRegisterValues } from "../models/User";
 import { router } from "../routes/routes";
 import { makePersistable } from "mobx-persist-store";
+import { notifications } from "@mantine/notifications";
 
 export default class UserStore {
   user: User | null = null;
@@ -38,6 +34,11 @@ export default class UserStore {
     try {
       await agent.Account.register(value);
       router.navigate("/");
+      notifications.show({
+        title: "Success!",
+        message: "Your registration was successful. You can now log in.",
+        color: "green",
+      });
     } catch (error) {
       console.error(error);
     }
@@ -55,48 +56,40 @@ export default class UserStore {
     });
   };
 
-  addSubscription = (type: keyof UserSubscriptions, value: string) => {
+  saveUser = async (
+    newEmail: string,
+    selectedAvatar: number,
+    localSubs: any,
+    bookmarks: string[]
+  ) => {
     if (!this.user) return;
-    runInAction(() => {
-      if (!this.user!.subscriptions) {
-        this.user!.subscriptions = {};
-      }
-      if (!this.user!.subscriptions![type]) {
-        this.user!.subscriptions[type] = [];
-      }
 
-      if (!this.user!.subscriptions[type]!.includes(value)) {
-        this.user!.subscriptions[type]!.push(value);
-      }
-    });
-  };
-
-  removeSubscription = (type: keyof UserSubscriptions, value: string) => {
-    if (!this.user?.subscriptions || !this.user.subscriptions[type]) return;
-    runInAction(() => {
-      this.user!.subscriptions![type] = this.user!.subscriptions![type]!.filter(
-        (item) => item !== value
-      );
-    });
-  };
-  removeBookmark = (newsId: string) => {
-    if (!this.user?.bookmarks) return;
-    runInAction(() => {
-      this.user!.bookmarks = this.user!.bookmarks!.filter(
-        (bookmark) => bookmark.newsId !== newsId
-      );
-    });
-  };
-
-  saveUser = async () => {
-    if (!this.user) return;
     try {
-      this.user.bookmarks?.forEach((x) => console.log({ ...x }));
-      await agent.Account.updateUser({
+      if (/^\S+@\S+$/.test(newEmail) == false) {
+        notifications.show({
+          title: "Invalid email",
+          message: "Please enter a valid email address.",
+          color: "red",
+        });
+        return;
+      }
+
+      const user = await agent.Account.updateUser({
         ...this.user,
-        bookmarks: this.user.bookmarks?.map((x) => x.newsId),
+        email: newEmail,
+        avatar: `https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-${selectedAvatar}.png`,
+        subscriptions: localSubs,
+        bookmarks: bookmarks,
       });
-      console.log(this.user);
+
+      runInAction(() => {
+        this.user = user;
+        notifications.show({
+          title: "Success!",
+          message: "Your profile has been updated.",
+          color: "green",
+        });
+      });
     } catch (error) {
       console.error("Failed to save user data:", error);
     }

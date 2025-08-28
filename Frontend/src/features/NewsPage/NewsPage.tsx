@@ -22,6 +22,7 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import Header from "../Header/Header";
 import { useEffect, useState } from "react";
 import { useStore } from "../../app/stores/store";
+import { notifications } from "@mantine/notifications";
 
 export default function NewsPage() {
   const { newsid } = useParams();
@@ -36,6 +37,11 @@ export default function NewsPage() {
   useEffect(() => {
     if (userStore.user == null) {
       navigate("/");
+      notifications.show({
+        title: "Access Restricted",
+        message: "You must be logged in to read the news.",
+        color: "red",
+      });
     }
   }, []);
 

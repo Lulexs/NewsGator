@@ -26,25 +26,34 @@ export default observer(function PersonalPage() {
   const [newCategory, setNewCategory] = useState("");
   const [newAuthor, setNewAuthor] = useState("");
   const [newNews, setNewNews] = useState("");
+  const [newEmail, setNewEmail] = useState(user.email);
   const [selectedAvatar, setSelectedAvatar] = useState<number>(
     +user.avatar.charAt(81)
   );
-
-  const handleInputChange = (field: keyof typeof user) => (event: any) => {
-    userStore.updateUserField(field, event.target.value);
-  };
+  const [localSubs, setLocalSubs] = useState<UserSubscriptions>({
+    categories: user.subscriptions?.categories || [],
+    authors:    user.subscriptions?.authors    || [],
+    newspapers: user.subscriptions?.newspapers || [],
+  });
+  const [bookmarks, setBookmarks] = useState(user.bookmarks || []);
 
   const addItem = (type: keyof UserSubscriptions, value: string) => {
     if (!value.trim()) return;
-    userStore.addSubscription(type, value.trim());
+    setLocalSubs((prev) => {
+      const list = prev[type] || [];
+      return { ...prev, [type]: list.includes(value) ? list : [...list, value] };
+    });
   };
 
   const removeItem = (type: keyof UserSubscriptions, value: string) => {
-    userStore.removeSubscription(type, value);
+    setLocalSubs((prev) => ({
+      ...prev,
+      [type]: (prev[type] || []).filter((v) => v !== value),
+    }));
   };
 
   const handleSave = () => {
-    userStore.saveUser();
+    userStore.saveUser(newEmail, selectedAvatar, localSubs, bookmarks.map(b => b.newsId));
   };
 
   return (
@@ -57,13 +66,13 @@ export default observer(function PersonalPage() {
             <TextInput
               label="Username"
               value={user.username}
-              onChange={handleInputChange("username")}
+              disabled
             />
             <TextInput
               label="Email"
               type="email"
-              value={user.email}
-              onChange={handleInputChange("email")}
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
             />
 
             <Box>
@@ -102,12 +111,6 @@ export default observer(function PersonalPage() {
                       })}
                       onClick={() => {
                         setSelectedAvatar(index + 1);
-                        userStore.updateUserField(
-                          "avatar",
-                          `https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-${
-                            index + 1
-                          }.png`
-                        );
                       }}
                     />
                   </Box>
@@ -151,7 +154,7 @@ export default observer(function PersonalPage() {
                 </Button>
               </Group>
               <Group mb="lg">
-                {user.subscriptions?.categories?.map((category) => (
+                {localSubs?.categories?.map((category) => (
                   <Chip
                     key={category}
                     checked={false}
@@ -189,7 +192,7 @@ export default observer(function PersonalPage() {
                 </Button>
               </Group>
               <Group mb="lg">
-                {user.subscriptions?.authors?.map((author) => (
+                {localSubs?.authors?.map((author) => (
                   <Chip
                     key={author}
                     checked={false}
@@ -210,7 +213,7 @@ export default observer(function PersonalPage() {
                   onChange={(e) => setNewNews(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      addItem("news", newNews);
+                      addItem("newspapers", newNews);
                       setNewNews("");
                     }
                   }}
@@ -219,7 +222,7 @@ export default observer(function PersonalPage() {
                   c="white"
                   bg="black"
                   onClick={() => {
-                    addItem("news", newNews);
+                    addItem("newspapers", newNews);
                     setNewNews("");
                   }}
                 >
@@ -227,11 +230,11 @@ export default observer(function PersonalPage() {
                 </Button>
               </Group>
               <Group mb="lg">
-                {user.subscriptions?.news?.map((newsItem) => (
+                {localSubs?.newspapers?.map((newsItem) => (
                   <Chip
                     key={newsItem}
                     checked={false}
-                    onClick={() => removeItem("news", newsItem)}
+                    onClick={() => removeItem("newspapers", newsItem)}
                   >
                     {newsItem} <X size={16} />
                   </Chip>
@@ -244,7 +247,7 @@ export default observer(function PersonalPage() {
                 Bookmarks
               </Title>
               <Stack>
-                {user.bookmarks?.map((bookmark) => (
+                {bookmarks.map((bookmark) => (
                   <Flex
                     key={bookmark.newsId}
                     align="center"
@@ -258,7 +261,7 @@ export default observer(function PersonalPage() {
                   >
                     {bookmark.thumbnail && (
                       <Image
-                        src={`http://localhost:9898/${bookmark.thumbnail}`}
+                        src={bookmark.thumbnail}
                         alt={bookmark.title}
                         w="50px"
                         h="50px"
@@ -289,7 +292,10 @@ export default observer(function PersonalPage() {
                       size="xs"
                       variant="outline"
                       color="red"
-                      onClick={() => userStore.removeBookmark(bookmark.newsId)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setBookmarks(prev => prev.filter(b => b.newsId !== bookmark.newsId));
+                      }}
                       style={{ marginLeft: "auto" }}
                     >
                       Remove

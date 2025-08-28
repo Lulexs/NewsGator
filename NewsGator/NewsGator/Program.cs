@@ -35,6 +35,7 @@ builder.Services.AddScoped<AcquirePageService>();
 builder.Services.AddScoped<NewsLogic>();
 builder.Services.AddScoped<PollsLogic>();
 builder.Services.AddScoped<TimelinesLogic>();
+builder.Services.AddScoped<UsersLogic>();
 
 builder.Services.AddCors(opt =>
 {

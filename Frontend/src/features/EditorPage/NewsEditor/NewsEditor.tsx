@@ -10,13 +10,14 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import agent from "../../../app/api/agent";
 import { Loader } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
+import { useMemo } from "react";
 
 export default observer(function NewsEditor() {
   const [
     newNewsDialogOpened,
     { toggle: toggleNewNewsDialog, close: closeNewNewsDialog },
   ] = useDisclosure();
-  const { newsEditorFormStateStore } = useStore();
+  const { newsEditorFormStateStore, userStore } = useStore();
   const selectedNews = newsEditorFormStateStore.editedNews;
 
   const {
@@ -28,10 +29,17 @@ export default observer(function NewsEditor() {
     refetch,
   } = useInfiniteQuery({
     queryKey: ["editornews"],
-    queryFn: agent.NewsAgent.getEditorNews,
+    queryFn: ({pageParam = 0}) => agent.NewsAgent.getEditorNews({userId: userStore.user!.id, pageParam}),
     initialPageParam: 0,
     getNextPageParam: (lastPage, _) => lastPage.nextCursor,
   });
+
+  const bookmarksIds = useMemo(
+    () => data?.pages.flatMap((p) => p.bookmarks) || [],
+    [data]
+  );
+
+  console.log(data);
 
   return (
     <>
@@ -96,6 +104,18 @@ export default observer(function NewsEditor() {
                           <Text lineClamp={1} size="md">
                             {news.title}
                           </Text>
+                          <Button
+                            c="white"
+                            bg={bookmarksIds.includes(news.id) ? "gray" : "black"}
+                            disabled={bookmarksIds.includes(news.id)}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              userStore.user!.bookmarks?.push(await agent.NewsAgent.bookmarkNews(userStore.user!.id, news.id));
+                              await refetch();
+                            }}
+                          >
+                            Bookmark
+                          </Button>
                         </Group>
                       </Group>
                     ))}

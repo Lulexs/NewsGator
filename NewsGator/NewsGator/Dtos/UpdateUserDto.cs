@@ -3,13 +3,13 @@ namespace NewsGator.Dtos;
 public class UpdateSubscriptionDto
 {
     public List<string>? Authors { get; set; }
-    public List<string>? News { get; set; }
+    public List<string>? Newspapers { get; set; }
     public List<string>? Categories { get; set; }
 
     public override string ToString()
     {
         return $"Authors: [{string.Join(", ", Authors ?? [])}], " +
-               $"News: [{string.Join(", ", News ?? [])}], " +
+               $"Newspapers: [{string.Join(", ", Newspapers ?? [])}], " +
                $"Categories: [{string.Join(", ", Categories ?? [])}]";
     }
 }

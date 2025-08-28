@@ -6,7 +6,11 @@ import {
   UserLoginValues,
   UserRegisterValues,
 } from "../models/User";
-import { EditorPageSimplifiedNews, News } from "../models/News";
+import {
+  EditorPageSimplifiedNews,
+  News,
+  ThumbnailedNews,
+} from "../models/News";
 import { Review } from "../models/Review";
 import { HomePagePoll, Poll } from "../models/Poll";
 import {
@@ -44,7 +48,7 @@ const Account = {
   register: (user: UserRegisterValues) =>
     requests.post<void>("/Users/register", user),
   updateUser: (user: UpdateUserValues) =>
-    requests.put<void>("/Users/update", user),
+    requests.put<User>("/Users/update", user),
 };
 
 const NewsAgent = {
@@ -67,15 +71,20 @@ const NewsAgent = {
     }),
 
   newNews: (news: any) => requests.post("/News", news),
-  getEditorNews: ({ pageParam }: any) =>
-    requests.get<{ data: EditorPageSimplifiedNews[]; nextCursor: number }>(
-      `/News?cursor=${pageParam}`
-    ),
+  getEditorNews: ({ userId, pageParam }: any) =>
+    requests.get<{
+      data: EditorPageSimplifiedNews[];
+      bookmarks: string[];
+      nextCursor: number;
+    }>(`/News/editornews/${userId}?cursor=${pageParam}`),
   updateNews: (newsId: string, news: any) =>
     requests.put(`/News/${newsId}`, news),
 
   getFilteredDataForEditor: (title: string) =>
     requests.get<EditorPageSimplifiedNews[]>(`/News/filter/?filter=${title}`),
+
+  bookmarkNews: (userId: string, newsId: string) =>
+    requests.put<ThumbnailedNews>(`/News/bookmark/${newsId}/${userId}`, {}),
 };
 
 const HomePageNewsAgent = {

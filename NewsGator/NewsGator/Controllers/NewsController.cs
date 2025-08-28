@@ -35,17 +35,18 @@ public class NewsController : ControllerBase
         }
     }
 
-    [HttpGet("")]
-    public async Task<IActionResult> GetNewsForEditor([FromQuery] int cursor)
+    [HttpGet("editornews/{editorId}")]
+    public async Task<IActionResult> GetNewsForEditor([FromQuery] int cursor, string editorId)
     {
         try
         {
             var totalNews = await _newsLogic.GetNewsCount();
             var news = await _newsLogic.GetNewsForEditor(cursor);
+            var bookmarks = await _newsLogic.GetBookmarkedNewsForEditor(editorId);
 
             if (cursor + 8 < totalNews)
-                return Ok(new { data = news, nextCursor = cursor + 8 });
-            return Ok(new { data = news });
+                return Ok(new { data = news, bookmarks, nextCursor = cursor + 8 });
+            return Ok(new { data = news, bookmarks });
         }
         catch (Exception ec)
         {
@@ -240,6 +241,21 @@ public class NewsController : ControllerBase
         catch (Exception e)
         {
             _logger.LogError("Error occured while upvoting/downvoting community note for news with id {}, {}", dto.NewsId, e.Message);
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpPut("bookmark/{newsId}/{userId}")]
+    public async Task<IActionResult> Bookmark(string newsId, string userId)
+    {
+        try
+        {
+            var bookmarkedNews = await _newsLogic.Bookmark(ObjectId.Parse(newsId), ObjectId.Parse(userId));
+            return Ok(new { newsId = bookmarkedNews.NewsId.ToString(), bookmarkedNews.Title, bookmarkedNews.Thumbnail });
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Error occured while bookmarking news with id {}, {}", newsId, e.Message);
             return BadRequest(e.Message);
         }
     }

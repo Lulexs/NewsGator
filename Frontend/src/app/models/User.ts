@@ -8,7 +8,7 @@ export enum UserRole {
 export interface UserSubscriptions {
   categories?: string[];
   authors?: string[];
-  news?: string[];
+  newspapers?: string[];
 }
 
 export interface User {

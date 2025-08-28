@@ -34,7 +34,7 @@ public class PollsLogic
         var collection = MongoSessionManager.GetCollection<Poll>("polls");
         var polls = await collection.Find(_ => true)
             .SortByDescending(poll => poll.DatePosted)
-            .ToListAsync(); 
+            .ToListAsync();
         return polls;
     }
 
@@ -66,7 +66,7 @@ public class PollsLogic
         // Pronadji staru opciju ako postoji
         var oldOption = poll.Options.FirstOrDefault(o => o.Voters.Contains(userObjectId));
 
-        // Lista azuriranja (kancer)
+        // Lista azuriranja
         var updates = new List<UpdateDefinition<Poll>>();
 
         // Ako postoji stara opcija, smanji glasove i ukloni korisnika iz liste glasaca
@@ -98,7 +98,7 @@ public class PollsLogic
             new BsonDocument("newOption.Option", new BsonString(option))
         ));
 
-        
+
         var updateResult = await collection.UpdateOneAsync(
             Builders<Poll>.Filter.Eq(p => p.Id, pollObjectId),
             Builders<Poll>.Update.Combine(updates),
@@ -137,5 +137,5 @@ public class PollsLogic
             return false;
         }
     }
-    
+
 }

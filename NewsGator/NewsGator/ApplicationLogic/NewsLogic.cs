@@ -335,4 +335,46 @@ public class NewsLogic
 
     }
 
+    public async Task<List<string>> GetBookmarkedNewsForEditor(string editorId)
+    {
+        var collection = MongoSessionManager.GetCollection<User>("users");
+
+        var projection = Builders<User>.Projection.Expression(user => user.Bookmarks!.Select(b => b.NewsId.ToString()).ToList());
+
+        var res = await collection.Find(user => user.Id.ToString() == editorId)
+                                   .Project(projection)
+                                   .FirstOrDefaultAsync();
+
+        return res ?? new List<string>();
+    }
+
+    public async Task<ThumbnailedNews> Bookmark(ObjectId newsId, ObjectId userId)
+    {
+        var usersCollection = MongoSessionManager.GetCollection<User>("users");
+        var newsCollection = MongoSessionManager.GetCollection<News>("news");
+
+        var news = await newsCollection.Find(n => n.Id == newsId).FirstOrDefaultAsync();
+
+        if (news == null)
+            throw new ArgumentException("News not found.");
+
+        var userBookmarks = await usersCollection.Find(u => u.Id == userId)
+            .Project(u => u.Bookmarks)
+            .FirstOrDefaultAsync();
+
+        userBookmarks = userBookmarks ?? new List<ThumbnailedNews>();
+
+        if (userBookmarks.Any(b => b.NewsId == news.Id))
+            throw new ArgumentException("News is already bookmarked.");
+
+        var newsToBookmark = new ThumbnailedNews { NewsId = news.Id, Title = news.Title, Thumbnail = news.Thumbnail };
+
+        userBookmarks.Add(newsToBookmark);
+
+        var update = Builders<User>.Update.Set(u => u.Bookmarks, userBookmarks);
+        await usersCollection.UpdateOneAsync(u => u.Id == userId, update);
+
+        return newsToBookmark;
+    }
+
 }
